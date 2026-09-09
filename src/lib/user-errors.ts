@@ -8,6 +8,7 @@ export type UserErrorFallback =
 
 const codeKeys = {
   AI_DAILY_LIMIT_REACHED: "ai.limitReached",
+  AI_NETWORK_LIMIT_REACHED: "ai.networkLimitReached",
   AI_PROVIDERS_UNAVAILABLE: "ai.providersUnavailable",
   AI_GENERATION_IN_PROGRESS: "errors.generationInProgress",
   AUTH_VERIFICATION_UNAVAILABLE: "errors.authUnavailable",

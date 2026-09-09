@@ -245,7 +245,7 @@ export const discoverDocumentTopics = createServerFn({ method: "POST" })
     try {
       const result = await runCachedTopicDiscovery({
         loadCached: () => loadCurrentTopics(supabase, document.id, sourceHash),
-        reserve: () => reserveAiGeneration(supabase, "topic_discovery", document.id, "und"),
+        reserve: () => reserveAiGeneration(supabase, "topic_discovery", document.id, "und", userId),
         generate: () =>
           generateAiText({
             system: TOPIC_DISCOVERY_SYSTEM_PROMPT,
@@ -273,7 +273,7 @@ export const discoverDocumentTopics = createServerFn({ method: "POST" })
           if (!saved || saved.length === 0) throw new Error(TOPIC_PERSISTENCE_FAILED);
           return saved.map(mapTopic);
         },
-        finish: (reservation, status) => finishAiGeneration(supabase, reservation.id, status),
+        finish: (reservation, status) => finishAiGeneration(supabase, userId, reservation, status),
         isGenerationInProgress: isAiGenerationInProgressError,
         waitForCached: () => loadCurrentTopics(supabase, document.id, sourceHash),
       });

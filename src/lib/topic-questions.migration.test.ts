@@ -183,7 +183,7 @@ test("topic practice derives scope from the original standard set and cannot wid
   assert.match(practice, /loadTopicQuestionContext\(supabase, userId, doc, topicId\)/u);
   assert.match(
     practice,
-    /reserveAiGeneration\(supabase, "practice_questions", doc\.id, practiceLocale, topicId\)/u,
+    /reserveAiGeneration\(supabase, "practice_questions", doc\.id, practiceLocale, userId, topicId\)/u,
   );
   assert.match(practice, /TOPIC EXCERPT \(the only allowed source\)/u);
   assert.match(practice, /p_source_question_set_id: sourceQuestionSetId[\s\S]*p_topic_id: topicId/u);

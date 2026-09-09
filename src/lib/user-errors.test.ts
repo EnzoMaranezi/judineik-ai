@@ -40,6 +40,7 @@ test("unknown errors of every supported shape map only to the selected semantic 
 test("quota, service availability and generation-in-progress states retain dedicated keys", () => {
   assert.equal(userErrorKey(new Error("AI_DAILY_LIMIT_REACHED")), "ai.limitReached");
   assert.equal(userErrorKey({ code: "AI_DAILY_LIMIT_REACHED", message: "private detail" }), "ai.limitReached");
+  assert.equal(userErrorKey(new Error("AI_NETWORK_LIMIT_REACHED")), "ai.networkLimitReached");
   assert.equal(userErrorKey({ code: "P0001", message: "AI_GENERATION_IN_PROGRESS" }), "errors.generationInProgress");
   assert.equal(userErrorKey(new Error("Summary generation is already in progress. Please try again shortly.")), "errors.generationInProgress");
   assert.equal(userErrorKey("AI_PROVIDERS_UNAVAILABLE"), "ai.providersUnavailable");
@@ -89,6 +90,7 @@ test("AI error rendering localizes known states and never renders unknown backen
     const t = (key: string) => translate(key, locale);
     assert.equal(aiErrorMessage(new Error("private provider error"), t, t("errors.generate")), t("errors.generate"));
     assert.equal(aiErrorMessage({ code: "AI_DAILY_LIMIT_REACHED" }, t, t("errors.generate")), t("ai.limitReached"));
+    assert.equal(aiErrorMessage({ code: "AI_NETWORK_LIMIT_REACHED" }, t, t("errors.generate")), t("ai.networkLimitReached"));
     assert.equal(aiErrorMessage(new Error("STALE_TOPIC_SOURCE"), t, t("errors.generate")), t("topics.stale"));
   }
 });

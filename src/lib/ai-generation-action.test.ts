@@ -31,6 +31,28 @@ test("does not call a provider or finish a reservation when quota reservation fa
   assert.equal(finished, false);
 });
 
+test("a network quota rejection also performs no provider call or finalization", async () => {
+  let generated = false;
+  let finished = false;
+  await assert.rejects(
+    runReservedAiGeneration({
+      reserve: async () => {
+        throw new Error("AI_NETWORK_LIMIT_REACHED");
+      },
+      generate: async () => {
+        generated = true;
+        return "output";
+      },
+      finish: async () => {
+        finished = true;
+      },
+    }),
+    /AI_NETWORK_LIMIT_REACHED/,
+  );
+  assert.equal(generated, false);
+  assert.equal(finished, false);
+});
+
 test("uses one reservation when an EOL provider falls back successfully", async () => {
   let reservations = 0;
   const finished: string[] = [];

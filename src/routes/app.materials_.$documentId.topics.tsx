@@ -5,6 +5,7 @@ import { AppCard, AppLabel, ErrorState, PrimaryButton, Skeleton } from "@/compon
 import {
   AI_DAILY_LIMIT_REACHED,
   AI_GENERATION_IN_PROGRESS,
+  AI_NETWORK_LIMIT_REACHED,
   AI_PROVIDERS_UNAVAILABLE,
 } from "@/lib/ai-errors";
 import {
@@ -37,6 +38,7 @@ function localizedError(error: unknown, t: (key: string) => string) {
   if (message.includes(TOPIC_OUTPUT_INVALID)) return t("topics.invalidOutput");
   if (message.includes(TOPIC_PERSISTENCE_FAILED)) return t("topics.persistenceError");
   if (message.includes(AI_DAILY_LIMIT_REACHED)) return t("ai.limitReached");
+  if (message.includes(AI_NETWORK_LIMIT_REACHED)) return t("ai.networkLimitReached");
   if (message.includes(AI_PROVIDERS_UNAVAILABLE)) return t("ai.providersUnavailable");
   if (message.includes(AI_GENERATION_IN_PROGRESS)) return t("topics.inProgress");
   return t("topics.genericError");

@@ -88,7 +88,7 @@ O agendamento dos flashcards é determinístico e executado no servidor. Ele foi
 
 ### Quota e feedback de geração
 
-Cada usuário pode executar até 20 gerações de IA por dia UTC. Conteúdo em cache ou já persistido não consome uma nova geração, e todas as tentativas de fallback fazem parte da mesma ação reservada.
+Cada usuário pode executar até 20 gerações de IA por dia UTC. Uma proteção antiabuso adicional limita a rede de origem a 100 gerações agregadas por dia UTC, sem armazenar o IP puro. Conteúdo em cache ou já persistido não consome uma nova geração, e todas as tentativas de fallback fazem parte da mesma ação reservada.
 
 Durante gerações longas, o NEXA mostra uma barra indeterminada com mensagens de status localizadas e rotativas. Não há porcentagem artificial: o resultado substitui o feedback somente quando a resposta real do servidor é concluída.
 
@@ -144,6 +144,7 @@ Execute as migrações em ordem:
 8. `0008_topic_generated_content.sql`: resumos no escopo de tópicos.
 9. `0009_topic_questions.sql`: questões e prática no escopo de tópicos.
 10. `0010_topic_flashcards.sql`: flashcards no escopo de tópicos.
+11. `0011_ai_ip_rate_limits.sql`: quota combinada por conta e proteção antiabuso por rede.
 
 Consulte [`supabase/README.md`](supabase/README.md) para configurar Auth, Storage, SMTP e URLs de redirecionamento.
 

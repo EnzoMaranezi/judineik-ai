@@ -364,7 +364,7 @@ export const generateDocumentQuestions = createServerFn({ method: "POST" })
     try {
       const saved = await runReservedAiGeneration({
         reserve: () =>
-          reserveAiGeneration(supabase, "questions", doc.id, localeContext.locale, topicId),
+          reserveAiGeneration(supabase, "questions", doc.id, localeContext.locale, userId, topicId),
         generate: () =>
           generateAiText({
             system: SYSTEM_PROMPT,
@@ -401,7 +401,7 @@ export const generateDocumentQuestions = createServerFn({ method: "POST" })
           if (!persisted) throw new Error("The questions were generated but couldn't be loaded.");
           return persisted;
         },
-        finish: (reservation, status) => finishAiGeneration(supabase, reservation.id, status),
+        finish: (reservation, status) => finishAiGeneration(supabase, userId, reservation, status),
       });
       return { reused: false as const, ...saved };
     } catch (error) {
@@ -801,7 +801,7 @@ export const generatePracticeQuestions = createServerFn({ method: "POST" })
     try {
       const saved = await runReservedAiGeneration({
         reserve: () =>
-          reserveAiGeneration(supabase, "practice_questions", doc.id, practiceLocale, topicId),
+          reserveAiGeneration(supabase, "practice_questions", doc.id, practiceLocale, userId, topicId),
         generate: () =>
           generateAiText({
             system: PRACTICE_SYSTEM_PROMPT,
@@ -845,7 +845,7 @@ export const generatePracticeQuestions = createServerFn({ method: "POST" })
           }
           return { id: savedSet.id, createdAt: savedSet.created_at, questions };
         },
-        finish: (reservation, status) => finishAiGeneration(supabase, reservation.id, status),
+        finish: (reservation, status) => finishAiGeneration(supabase, userId, reservation, status),
       });
       return saved;
     } catch (error) {

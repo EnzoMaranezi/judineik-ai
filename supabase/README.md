@@ -28,6 +28,7 @@ As migrações devem ser aplicadas na ordem numérica:
 8. `0008_topic_generated_content.sql`: resumos por tópico e escopo de geração correspondente.
 9. `0009_topic_questions.sql`: conjuntos, sessões e prática de questões por tópico.
 10. `0010_topic_flashcards.sql`: conjuntos de flashcards por tópico.
+11. `0011_ai_ip_rate_limits.sql`: proteção diária combinada por conta e por identificador de rede.
 
 Não pule migrações e não altere a ordem em um projeto vazio.
 
@@ -108,6 +109,13 @@ SUPABASE_PUBLISHABLE_KEY
 NVIDIA_API_KEY
 OPENROUTER_API_KEY
 OPENROUTER_MODEL
+AI_IP_HMAC_SECRET
+AI_QUOTA_RPC_SIGNING_SECRET
 ```
 
-As chaves NVIDIA e OpenRouter são exclusivamente de servidor. Não use prefixo `VITE_` para elas.
+As chaves NVIDIA, OpenRouter e os segredos de quota são exclusivamente de servidor. Não use prefixo `VITE_` para elas.
+
+Antes de aplicar `0011_ai_ip_rate_limits.sql`, crie no Supabase Vault um segredo chamado
+`AI_QUOTA_RPC_SIGNING_SECRET`. O valor deve ser o mesmo configurado no ambiente server-side da
+aplicação, ter pelo menos 32 bytes e nunca ser exposto ao cliente. `AI_IP_HMAC_SECRET` permanece
+somente no ambiente server-side da aplicação e não deve ser armazenado no banco.

@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       ai_generation_events: {
         Row: {
+          action_id: string | null
           completed_at: string | null
           created_at: string
           document_id: string | null
@@ -30,6 +31,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          action_id?: string | null
           completed_at?: string | null
           created_at?: string
           document_id?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          action_id?: string | null
           completed_at?: string | null
           created_at?: string
           document_id?: string | null
@@ -73,6 +76,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_ip_generation_events: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          ip_digest: string
+          key_version: number
+          reservation_id: string
+          reserved_until: string
+          status: string
+          usage_date: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          ip_digest: string
+          key_version: number
+          reservation_id: string
+          reserved_until: string
+          status: string
+          usage_date: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          ip_digest?: string
+          key_version?: number
+          reservation_id?: string
+          reserved_until?: string
+          status?: string
+          usage_date?: string
+        }
+        Relationships: []
       }
       documents: {
         Row: {
@@ -375,6 +411,10 @@ export type Database = {
     Functions: {
       finish_ai_generation: {
         Args: {
+          p_authorization: string
+          p_ip_digest: string
+          p_issued_at: number
+          p_key_version: number
           p_reservation_id: string
           p_status: string
         }
@@ -414,10 +454,15 @@ export type Database = {
       }
       reserve_ai_generation: {
         Args: {
-          p_kind: string
+          p_action_id: string
+          p_authorization: string
           p_document_id: string
+          p_ip_digest: string
+          p_issued_at: number
+          p_key_version: number
+          p_kind: string
           p_locale: string
-          p_topic_id?: string | null
+          p_topic_id: string | null
         }
         Returns: {
           reservation_id: string

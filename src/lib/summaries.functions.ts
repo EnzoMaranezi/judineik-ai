@@ -384,6 +384,7 @@ export const generateDocumentSummary = createServerFn({ method: "POST" })
             "summary",
             documentRow.id,
             localeContext.locale,
+            userId,
             topicId,
           ),
         generate: () =>
@@ -426,7 +427,7 @@ export const generateDocumentSummary = createServerFn({ method: "POST" })
           if (!persisted) throw new Error("The summary was generated but couldn't be loaded.");
           return persisted;
         },
-        finish: (reservation, status) => finishAiGeneration(supabase, reservation.id, status),
+        finish: (reservation, status) => finishAiGeneration(supabase, userId, reservation, status),
       });
       return { reused: false as const, ...saved };
     } catch (error) {

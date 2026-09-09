@@ -44,6 +44,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.viewAll": "View all",
     "common.goToMaterials": "Go to materials",
     "ai.limitReached": "You've reached your daily AI generation limit. Please try again tomorrow.",
+    "ai.networkLimitReached": "AI generation is temporarily limited on this network. Please try again later. Your saved content is still available.",
     "ai.providersUnavailable": "The AI service is temporarily unavailable. Please try again later.",
     "aiProgress.label": "AI generation in progress",
     "aiProgress.secondary": "This may take a few seconds.",
@@ -754,6 +755,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.viewAll": "Ver todos",
     "common.goToMaterials": "Ir para materiais",
     "ai.limitReached": "Você atingiu o limite diário de gerações de IA. Tente novamente amanhã.",
+    "ai.networkLimitReached": "As gerações de IA estão temporariamente limitadas nesta rede. Tente novamente mais tarde. Seu conteúdo salvo continua disponível.",
     "ai.providersUnavailable":
       "O serviço de IA está temporariamente indisponível. Tente novamente mais tarde.",
     "aiProgress.label": "Geração de IA em andamento",

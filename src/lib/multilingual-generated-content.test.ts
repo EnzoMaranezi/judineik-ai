@@ -94,15 +94,15 @@ test("question-session RLS validates the document and exact set relationship", (
 test("generation captures one verified locale context and uses it for cache, quota, prompt, and persistence", () => {
   assert.match(summaries, /const localeContext = getAiLocaleContext\(claims\)/);
   assert.match(summaries, /loadSummaryVariant\([\s\S]*documentRow\.id,[\s\S]*localeContext\.locale,[\s\S]*topicId/);
-  assert.match(summaries, /reserveAiGeneration\([\s\S]*"summary",[\s\S]*documentRow\.id,[\s\S]*localeContext\.locale,[\s\S]*topicId/);
+  assert.match(summaries, /reserveAiGeneration\([\s\S]*"summary",[\s\S]*documentRow\.id,[\s\S]*localeContext\.locale,[\s\S]*userId,[\s\S]*topicId/);
   assert.match(summaries, /p_locale: localeContext\.locale/);
   assert.match(
     questions,
-    /reserveAiGeneration\(supabase, "questions", doc\.id, localeContext\.locale, topicId\)/,
+    /reserveAiGeneration\(supabase, "questions", doc\.id, localeContext\.locale, userId, topicId\)/,
   );
   assert.match(
     flashcards,
-    /reserveAiGeneration\(supabase, "flashcards", doc\.id, localeContext\.locale, topicId\)/,
+    /reserveAiGeneration\(supabase, "flashcards", doc\.id, localeContext\.locale, userId, topicId\)/,
   );
 });
 

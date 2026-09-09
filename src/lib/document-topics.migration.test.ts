@@ -160,7 +160,7 @@ test("topic discovery alone may use und while generated-content kinds still requ
   assert.match(migration, /p_kind = 'topic_discovery'[\s\S]*p_locale <> 'und'/u);
   assert.match(migration, /ELSIF p_locale NOT IN \('en', 'pt-BR'\)/u);
   assert.match(migration, /v_limit integer := 20/u);
-  assert.match(functions, /reserveAiGeneration\(supabase, "topic_discovery", document\.id, "und"\)/u);
+  assert.match(functions, /reserveAiGeneration\(supabase, "topic_discovery", document\.id, "und", userId\)/u);
 });
 
 test("server cache and distributed in-progress handling prevent duplicate discovery", () => {

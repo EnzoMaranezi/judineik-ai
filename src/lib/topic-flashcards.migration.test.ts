@@ -116,7 +116,7 @@ test("generation reconstructs verified topic source before reservation and never
   assert.match(functions, /parseTopicSummarySourceRanges\(topic\.source_ranges\)/u);
   assert.match(functions, /reconstructVerifiedTopicSource\(/u);
   assert.match(functions, /TOPIC-FOCUSED MODE:[\s\S]*TOPIC EXCERPT \(the only allowed source\)/u);
-  assert.match(functions, /reserveAiGeneration\(supabase, "flashcards", doc\.id, localeContext\.locale, topicId\)/u);
+  assert.match(functions, /reserveAiGeneration\(supabase, "flashcards", doc\.id, localeContext\.locale, userId, topicId\)/u);
   assert.match(functions, /p_topic_id: topicId/u);
   assert.doesNotMatch(functions, /topic\?\.sourceText \?\? doc\.extracted_text/u);
 });

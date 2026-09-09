@@ -265,7 +265,7 @@ export const generateDocumentFlashcards = createServerFn({ method: "POST" })
     if (existing) return { reused: true as const, ...existing };
     try {
       const saved = await runReservedAiGeneration({
-        reserve: () => reserveAiGeneration(supabase, "flashcards", doc.id, localeContext.locale, topicId),
+        reserve: () => reserveAiGeneration(supabase, "flashcards", doc.id, localeContext.locale, userId, topicId),
         generate: () => generateAiText({
           system: SYSTEM_PROMPT,
           prompt: topic
@@ -282,7 +282,7 @@ export const generateDocumentFlashcards = createServerFn({ method: "POST" })
           if (!savedDeck) throw new Error("The flashcards were generated but couldn't be saved.");
           return savedDeck;
         },
-        finish: (reservation, status) => finishAiGeneration(supabase, reservation.id, status),
+        finish: (reservation, status) => finishAiGeneration(supabase, userId, reservation, status),
       });
       return { reused: false as const, ...saved };
     } catch (cause) {
