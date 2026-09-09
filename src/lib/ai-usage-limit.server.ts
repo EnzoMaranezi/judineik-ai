@@ -24,7 +24,10 @@ export interface AiGenerationReservation {
   limitCount: number;
   ipDigest: string;
   keyVersion: number;
+  usageDate: string;
 }
+
+export const AI_GENERATION_RESERVATION_EXPIRED = "AI_GENERATION_RESERVATION_EXPIRED";
 
 function errorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
@@ -82,6 +85,7 @@ export async function reserveAiGeneration(
     p_action_id: quotaAuthorization.actionId,
     p_ip_digest: quotaAuthorization.ipDigest,
     p_key_version: quotaAuthorization.keyVersion,
+    p_usage_date: quotaAuthorization.usageDate,
     p_issued_at: quotaAuthorization.issuedAt,
     p_authorization: quotaAuthorization.authorization,
   });
@@ -101,6 +105,7 @@ export async function reserveAiGeneration(
     limitCount: row.limit_count,
     ipDigest: quotaAuthorization.ipDigest,
     keyVersion: quotaAuthorization.keyVersion,
+    usageDate: quotaAuthorization.usageDate,
   };
 }
 
@@ -116,15 +121,18 @@ export async function finishAiGeneration(
     status,
     ipDigest: reservation.ipDigest,
     keyVersion: reservation.keyVersion,
+    usageDate: reservation.usageDate,
   });
-  const { error } = await supabase.rpc("finish_ai_generation", {
+  const { data, error } = await supabase.rpc("finish_ai_generation", {
     p_reservation_id: reservation.id,
     p_status: status,
     p_ip_digest: reservation.ipDigest,
     p_key_version: reservation.keyVersion,
+    p_usage_date: reservation.usageDate,
     p_issued_at: finalization.issuedAt,
     p_authorization: finalization.authorization,
   });
 
   if (error) throw new Error(error.message);
+  if (data === "expired") throw new Error(AI_GENERATION_RESERVATION_EXPIRED);
 }

@@ -11,15 +11,19 @@ export async function runReservedAiGeneration<T, TReservation, TResult = T>({
 }): Promise<TResult> {
   const reservation = await reserve();
   let providerReturned = false;
+  let finalizationAttempted = false;
 
   try {
     const result = await generate();
     providerReturned = true;
     const completedResult = afterGenerate ? await afterGenerate(result) : result as unknown as TResult;
+    finalizationAttempted = true;
     await finish(reservation, "succeeded");
     return completedResult;
   } catch (error) {
-    await finish(reservation, providerReturned ? "succeeded" : "failed").catch(() => undefined);
+    if (!finalizationAttempted) {
+      await finish(reservation, providerReturned ? "succeeded" : "failed").catch(() => undefined);
+    }
     throw error;
   }
 }

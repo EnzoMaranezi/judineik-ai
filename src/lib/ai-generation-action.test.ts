@@ -134,3 +134,19 @@ test("releases a reservation when all providers fail before returning text", asy
   );
   assert.deepEqual(finished, ["failed"]);
 });
+
+test("does not issue a conflicting second finalization when finalization itself fails", async () => {
+  const finished: string[] = [];
+  await assert.rejects(
+    runReservedAiGeneration({
+      reserve: async () => "reservation",
+      generate: async () => "generated output",
+      finish: async (_reservation, status) => {
+        finished.push(status);
+        throw new Error("AI_GENERATION_RESERVATION_EXPIRED");
+      },
+    }),
+    /AI_GENERATION_RESERVATION_EXPIRED/,
+  );
+  assert.deepEqual(finished, ["succeeded"]);
+});

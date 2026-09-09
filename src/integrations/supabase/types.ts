@@ -417,8 +417,9 @@ export type Database = {
           p_key_version: number
           p_reservation_id: string
           p_status: string
+          p_usage_date: string
         }
-        Returns: undefined
+        Returns: string
       }
       create_flashcard_set_with_cards: {
         Args: { p_cards: Json; p_document_id: string; p_locale: string; p_model: string | null; p_topic_id?: string | null }
@@ -463,6 +464,7 @@ export type Database = {
           p_kind: string
           p_locale: string
           p_topic_id: string | null
+          p_usage_date: string
         }
         Returns: {
           reservation_id: string

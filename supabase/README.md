@@ -119,3 +119,40 @@ Antes de aplicar `0011_ai_ip_rate_limits.sql`, crie no Supabase Vault um segredo
 `AI_QUOTA_RPC_SIGNING_SECRET`. O valor deve ser o mesmo configurado no ambiente server-side da
 aplicação, ter pelo menos 32 bytes e nunca ser exposto ao cliente. `AI_IP_HMAC_SECRET` permanece
 somente no ambiente server-side da aplicação e não deve ser armazenado no banco.
+
+### Rollout da quota por conta e rede
+
+`0011` remove as assinaturas antigas dos RPCs de reserva/finalização; por isso, app antigo e app
+novo não são compatíveis com o mesmo banco durante a troca. Preview deve usar um projeto Supabase
+separado para validar migration e app novos juntos. Em Production, use uma janela controlada:
+
+1. bloqueie temporariamente novas gerações de IA na borda/aplicação;
+2. aguarde requisições de geração em andamento terminarem;
+3. confirme que `AI_QUOTA_RPC_SIGNING_SECRET` no Vercel corresponde ao segredo de mesmo nome no Vault;
+4. aplique `0011`;
+5. publique imediatamente o app novo e valide uma reserva sem chamar provider, quando possível;
+6. reabra as gerações somente após o app novo estar saudável.
+
+Não restaure os RPCs antigos para rollback, pois isso reabre o bypass da quota de rede. Se o app
+novo precisar ser revertido, mantenha as gerações bloqueadas e reverta migration e app juntos em
+uma janela controlada, usando um script de rollback previamente revisado.
+
+Deployments que compartilham banco e tráfego de usuários precisam compartilhar o mesmo
+`AI_IP_HMAC_SECRET`, para que a mesma rede produza o mesmo digest. O
+`AI_QUOTA_RPC_SIGNING_SECRET` server-side deve sempre corresponder ao Vault do banco usado por esse
+deployment. Não rotacione `AI_IP_HMAC_SECRET` durante um dia UTC: isso dividiria a contagem diária
+entre dois digests. `key_version` permite uma rotação futura em uma fronteira UTC sem reescrever o
+histórico; a migration atual aceita somente a versão `1`.
+
+### Retenção da quota de rede
+
+A reserva não executa limpeza. Depois de aplicar `0011`, habilite `pg_cron` no projeto e execute,
+uma única vez, `operations/schedule_ai_ip_quota_retention.sql`. O job diário chama
+`cleanup_ai_ip_generation_events()` como proprietário do banco. A função não pode ser executada por
+`PUBLIC`, `anon`, `authenticated` ou `service_role`, remove apenas eventos com mais de sete dias e
+nunca remove o dia UTC atual. Confirme o job em `cron.job` e monitore `cron.job_run_details` durante
+o rollout.
+
+Para validar `0011` sem acessar Supabase remoto, execute `npm run test:postgres:ai-quota`. O comando
+inicia um PostgreSQL 18 efêmero somente em loopback, aplica uma base Supabase mínima e a migration,
+usa identidades/segredos sintéticos e remove o cluster ao terminar.

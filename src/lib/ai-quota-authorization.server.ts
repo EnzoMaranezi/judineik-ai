@@ -20,9 +20,14 @@ export type AiQuotaAuthorization = {
   actionId: string;
   ipDigest: string;
   keyVersion: number;
+  usageDate: string;
   issuedAt: number;
   authorization: string;
 };
+
+export function utcUsageDate(now: number): string {
+  return new Date(now).toISOString().slice(0, 10);
+}
 
 export function requireQuotaSecret(value: string | undefined): string {
   if (!value || Buffer.byteLength(value, "utf8") < 32) {
@@ -53,6 +58,7 @@ export function reservationAuthorizationPayload(
     scope.locale,
     authorization.actionId,
     authorization.ipDigest,
+    authorization.usageDate,
     authorization.issuedAt,
   ].join("\n");
 }
@@ -63,6 +69,7 @@ export function finalizationAuthorizationPayload({
   status,
   ipDigest,
   keyVersion,
+  usageDate,
   issuedAt,
 }: {
   userId: string;
@@ -70,9 +77,10 @@ export function finalizationAuthorizationPayload({
   status: "succeeded" | "failed";
   ipDigest: string;
   keyVersion: number;
+  usageDate: string;
   issuedAt: number;
 }): string {
-  return ["finish", keyVersion, userId, reservationId, status, ipDigest, issuedAt].join("\n");
+  return ["finish", keyVersion, userId, reservationId, status, ipDigest, usageDate, issuedAt].join("\n");
 }
 
 export function createAiQuotaAuthorization(scope: GenerationScope): AiQuotaAuthorization {
@@ -84,11 +92,13 @@ export function createAiQuotaAuthorization(scope: GenerationScope): AiQuotaAutho
     requiredSecret("AI_IP_HMAC_SECRET"),
     `nexa-ai-ip-v${AI_QUOTA_AUTHORIZATION_VERSION}\n${clientIp.family}\n${clientIp.address}`,
   );
+  const now = Date.now();
   const unsigned = {
     actionId: randomUUID(),
     ipDigest,
     keyVersion: AI_QUOTA_AUTHORIZATION_VERSION,
-    issuedAt: Math.floor(Date.now() / 1000),
+    usageDate: utcUsageDate(now),
+    issuedAt: Math.floor(now / 1000),
   };
   return {
     ...unsigned,
@@ -105,12 +115,14 @@ export function createAiQuotaFinalizationAuthorization({
   status,
   ipDigest,
   keyVersion,
+  usageDate,
 }: {
   userId: string;
   reservationId: string;
   status: "succeeded" | "failed";
   ipDigest: string;
   keyVersion: number;
+  usageDate: string;
 }) {
   const issuedAt = Math.floor(Date.now() / 1000);
   return {
@@ -123,6 +135,7 @@ export function createAiQuotaFinalizationAuthorization({
         status,
         ipDigest,
         keyVersion,
+        usageDate,
         issuedAt,
       }),
     ),

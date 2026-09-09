@@ -24,6 +24,7 @@ test("removes unsigned overloads and grants only the signed RPC signatures", () 
   assert.match(migration, /DROP FUNCTION IF EXISTS public\.finish_ai_generation\(uuid, text\)/);
   assert.match(migration, /CREATE FUNCTION public\.reserve_ai_generation\([\s\S]*p_action_id uuid[\s\S]*p_authorization text/);
   assert.match(migration, /CREATE FUNCTION public\.finish_ai_generation\([\s\S]*p_authorization text/);
+  assert.match(migration, /p_usage_date date/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.reserve_ai_generation\([^)]+\) FROM PUBLIC/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.finish_ai_generation\([^)]+\) FROM anon/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.reserve_ai_generation\([^)]+\) TO authenticated/);
@@ -34,6 +35,7 @@ test("validates signed short-lived authorization and document/topic ownership be
   assert.match(migration, /p_issued_at < v_now_epoch - 300[\s\S]*p_issued_at > v_now_epoch \+ 30/);
   assert.match(migration, /FROM vault\.decrypted_secrets[\s\S]*name = 'AI_QUOTA_RPC_SIGNING_SECRET'/);
   assert.match(migration, /extensions\.hmac\([\s\S]*convert_to\(v_signing_secret, 'UTF8'\)[\s\S]*'sha256'/);
+  assert.match(migration, /public\.ai_quota_secure_equals/);
   const ownership = migration.indexOf("FROM public.documents");
   const locks = migration.indexOf("'ai-ip:'");
   const insert = migration.indexOf("INSERT INTO public.ai_generation_events");
@@ -50,7 +52,7 @@ test("serializes IP, account and scope in a fixed order and enforces exact limit
   assert.match(migration, /v_ip_limit integer := 100/);
   assert.match(migration, /IF v_account_used >= v_account_limit THEN[\s\S]*AI_DAILY_LIMIT_REACHED/);
   assert.match(migration, /IF v_ip_used >= v_ip_limit THEN[\s\S]*AI_NETWORK_LIMIT_REACHED/);
-  assert.match(migration, /status = 'succeeded'[\s\S]*status = 'reserved' AND reserved_until > v_now/);
+  assert.match(migration, /account_event\.status = 'succeeded'[\s\S]*account_event\.status = 'reserved' AND account_event\.reserved_until > v_now/);
 
   const accountLimit = Number(migration.match(/v_account_limit integer := (\d+)/)?.[1]);
   const ipLimit = Number(migration.match(/v_ip_limit integer := (\d+)/)?.[1]);
@@ -69,11 +71,22 @@ test("uses one shared reservation and atomic paired finalization semantics", () 
   assert.match(migration, /IF v_account_status = p_status AND v_ip_status = p_status THEN[\s\S]*RETURN/);
   assert.match(migration, /IF v_account_status <> 'reserved' OR v_ip_status <> 'reserved' THEN[\s\S]*AI_GENERATION_FINALIZATION_CONFLICT/);
   assert.match(migration, /UPDATE public\.ai_generation_events[\s\S]*UPDATE public\.ai_ip_generation_events/);
+  assert.match(migration, /v_account_reserved_until <= v_now[\s\S]*status = 'expired'[\s\S]*RETURN 'expired'/);
 });
 
-test("keeps UTC boundaries, expired reservations and seven-day retention semantics explicit", () => {
+test("keeps UTC boundaries, expired reservations and independent retention semantics explicit", () => {
   assert.match(migration, /transaction_timestamp\(\) AT TIME ZONE 'UTC'/);
+  assert.match(migration, /p_usage_date IS DISTINCT FROM v_usage_date/);
+  assert.match(migration, /clock_timestamp\(\)[\s\S]*p_usage_date IS DISTINCT FROM \(\(v_now AT TIME ZONE 'UTC'\)::date\)/);
   assert.match(migration, /reserved_until > v_now/);
+  assert.match(migration, /CREATE FUNCTION public\.cleanup_ai_ip_generation_events\(\)/);
   assert.match(migration, /created_at < v_now - interval '7 days'[\s\S]*usage_date < v_usage_date/);
+  const reserveBody = migration.slice(migration.indexOf("CREATE FUNCTION public.reserve_ai_generation"), migration.indexOf("CREATE FUNCTION public.finish_ai_generation"));
+  assert.doesNotMatch(reserveBody, /DELETE FROM public\.ai_ip_generation_events/);
   assert.match(migration, /now \+ interval '30 minutes'/);
+});
+
+test("qualifies replay identifiers that collide with output-column names", () => {
+  assert.match(migration, /WHERE ip_event\.reservation_id = v_existing\.id/);
+  assert.doesNotMatch(migration, /WHERE reservation_id = v_existing\.id/);
 });
