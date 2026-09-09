@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppIpDiagnosticRouteImport } from './routes/app.ip-diagnostic'
 import { Route as AppMaterialRouteImport } from './routes/app.material'
 import { Route as AppMaterialsRouteImport } from './routes/app.materials'
 import { Route as AppPlanRouteImport } from './routes/app.plan'
@@ -47,6 +48,11 @@ const AuthRoute = AuthRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIpDiagnosticRoute = AppIpDiagnosticRouteImport.update({
+  id: '/ip-diagnostic',
+  path: '/ip-diagnostic',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMaterialRoute = AppMaterialRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/ip-diagnostic': typeof AppIpDiagnosticRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/plan': typeof AppPlanRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/ip-diagnostic': typeof AppIpDiagnosticRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/plan': typeof AppPlanRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/ip-diagnostic': typeof AppIpDiagnosticRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/plan': typeof AppPlanRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/app/ip-diagnostic'
     | '/app/material'
     | '/app/materials'
     | '/app/plan'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/app/ip-diagnostic'
     | '/app/material'
     | '/app/materials'
     | '/app/plan'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/app/ip-diagnostic'
     | '/app/material'
     | '/app/materials'
     | '/app/plan'
@@ -290,6 +302,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ip-diagnostic': {
+      id: '/app/ip-diagnostic'
+      path: '/ip-diagnostic'
+      fullPath: '/app/ip-diagnostic'
+      preLoaderRoute: typeof AppIpDiagnosticRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/material': {
@@ -401,6 +420,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppIpDiagnosticRoute: typeof AppIpDiagnosticRoute
   AppMaterialRoute: typeof AppMaterialRoute
   AppMaterialsRoute: typeof AppMaterialsRoute
   AppPlanRoute: typeof AppPlanRoute
@@ -419,6 +439,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppIpDiagnosticRoute: AppIpDiagnosticRoute,
   AppMaterialRoute: AppMaterialRoute,
   AppMaterialsRoute: AppMaterialsRoute,
   AppPlanRoute: AppPlanRoute,
