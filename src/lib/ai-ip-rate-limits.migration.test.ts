@@ -72,6 +72,15 @@ test("uses one shared reservation and atomic paired finalization semantics", () 
   assert.match(migration, /IF v_account_status <> 'reserved' OR v_ip_status <> 'reserved' THEN[\s\S]*AI_GENERATION_FINALIZATION_CONFLICT/);
   assert.match(migration, /UPDATE public\.ai_generation_events[\s\S]*UPDATE public\.ai_ip_generation_events/);
   assert.match(migration, /v_account_reserved_until <= v_now[\s\S]*status = 'expired'[\s\S]*RETURN 'expired'/);
+
+  const finishBody = migration.slice(
+    migration.indexOf("CREATE FUNCTION public.finish_ai_generation"),
+    migration.indexOf("CREATE FUNCTION public.cleanup_ai_ip_generation_events"),
+  );
+  const rowLock = finishBody.indexOf("FOR UPDATE OF account_event, ip_event");
+  const postLockClock = finishBody.indexOf("v_now := clock_timestamp();", rowLock);
+  const expiryDecision = finishBody.indexOf("IF v_account_reserved_until <= v_now THEN", rowLock);
+  assert.ok(rowLock >= 0 && rowLock < postLockClock && postLockClock < expiryDecision);
 });
 
 test("keeps UTC boundaries, expired reservations and independent retention semantics explicit", () => {

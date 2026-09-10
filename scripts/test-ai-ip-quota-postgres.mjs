@@ -441,6 +441,82 @@ check("invalid and expired signatures fail closed", async ({ client }) => {
   );
 });
 
+check("finish rechecks expiry after waiting for both reservation row locks", async ({ client, connect }) => {
+  await reset(client);
+  const identity = await createIdentity(client);
+  const reservation = await reserve(client, identity.userId, signedReserve(identity.userId, identity.documentId));
+  const expiresAt = new Date(Date.now() + 1_200);
+  await client.query("UPDATE public.ai_generation_events SET reserved_until=$2 WHERE id=$1", [reservation.reservation_id, expiresAt]);
+  await client.query("UPDATE public.ai_ip_generation_events SET reserved_until=$2 WHERE reservation_id=$1", [reservation.reservation_id, expiresAt]);
+
+  const blocker = await connect();
+  const finisher = await connect();
+  let finishPromise;
+  try {
+    await blocker.query("BEGIN");
+    await blocker.query(
+      `SELECT account_event.id
+       FROM public.ai_generation_events AS account_event
+       JOIN public.ai_ip_generation_events AS ip_event
+         ON ip_event.reservation_id = account_event.id
+       WHERE account_event.id = $1
+       FOR UPDATE OF account_event, ip_event`,
+      [reservation.reservation_id],
+    );
+
+    const finisherPid = (await finisher.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+    finishPromise = finish(finisher, identity.userId, signedFinish(identity.userId, reservation));
+
+    let observedLockWait = false;
+    const waitDeadline = Date.now() + 1_000;
+    while (Date.now() < waitDeadline) {
+      const activity = await client.query(
+        "SELECT wait_event_type FROM pg_stat_activity WHERE pid=$1",
+        [finisherPid],
+      );
+      if (activity.rows[0]?.wait_event_type === "Lock") {
+        observedLockWait = true;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    assert.equal(observedLockWait, true, "finish must be waiting on the held reservation row locks");
+
+    const remaining = expiresAt.getTime() - Date.now();
+    if (remaining >= 0) await new Promise((resolve) => setTimeout(resolve, remaining + 100));
+    await blocker.query("COMMIT");
+
+    assert.equal(await finishPromise, "expired");
+    const statuses = await client.query(
+      `SELECT account_event.status AS account_status, ip_event.status AS ip_status,
+              account_event.completed_at >= account_event.reserved_until AS account_finished_after_expiry,
+              ip_event.completed_at >= ip_event.reserved_until AS ip_finished_after_expiry,
+              (SELECT count(*)::int FROM public.ai_generation_events
+               WHERE status = 'succeeded' OR (status = 'reserved' AND reserved_until > clock_timestamp())) AS account_count,
+              (SELECT count(*)::int FROM public.ai_ip_generation_events
+               WHERE status = 'succeeded' OR (status = 'reserved' AND reserved_until > clock_timestamp())) AS ip_count
+       FROM public.ai_generation_events AS account_event
+       JOIN public.ai_ip_generation_events AS ip_event
+         ON ip_event.reservation_id = account_event.id
+       WHERE account_event.id = $1`,
+      [reservation.reservation_id],
+    );
+    assert.deepEqual(statuses.rows[0], {
+      account_status: "expired",
+      ip_status: "expired",
+      account_finished_after_expiry: true,
+      ip_finished_after_expiry: true,
+      account_count: 0,
+      ip_count: 0,
+    });
+  } finally {
+    await blocker.query("ROLLBACK").catch(() => {});
+    if (finishPromise) await finishPromise.catch(() => {});
+    await blocker.end();
+    await finisher.end();
+  }
+});
+
 check("expired reservation cannot become success after its account and IP slots are reused", async ({ client, connect }) => {
   await reset(client);
   const date = new Date().toISOString().slice(0, 10);
@@ -455,21 +531,26 @@ check("expired reservation cannot become success after its account and IP slots 
   const expiredAt = new Date(Date.now() - 1_000);
   await client.query("UPDATE public.ai_generation_events SET reserved_until=$2 WHERE id=$1", [old.reservation_id, expiredAt]);
   await client.query("UPDATE public.ai_ip_generation_events SET reserved_until=$2 WHERE reservation_id=$1", [old.reservation_id, expiredAt]);
-  await reserve(client, identities[0].userId, signedReserve(identities[0].userId, identities[0].documentId, { kind: "questions", ipDigest }));
-
   const finishInput = signedFinish(identities[0].userId, old);
   const left = await connect();
   const right = await connect();
+  let replacement;
+  let oldOutcome;
   try {
-    const outcomes = await Promise.all([
-      finish(left, identities[0].userId, finishInput),
+    [replacement, oldOutcome] = await Promise.all([
+      reserve(left, identities[0].userId, signedReserve(identities[0].userId, identities[0].documentId, { kind: "questions", ipDigest })),
       finish(right, identities[0].userId, finishInput),
     ]);
-    assert.deepEqual(outcomes, ["expired", "expired"]);
+    assert.equal(oldOutcome, "expired");
   } finally {
     await left.end();
     await right.end();
   }
+  assert.ok(replacement);
+  assert.equal(
+    await finish(client, identities[0].userId, signedFinish(identities[0].userId, replacement)),
+    "succeeded",
+  );
 
   const totals = await client.query(
     `SELECT
@@ -477,10 +558,16 @@ check("expired reservation cannot become success after its account and IP slots 
        AND (a.status='succeeded' OR (a.status='reserved' AND a.reserved_until>clock_timestamp()))) AS account_count,
       (SELECT count(*)::int FROM public.ai_ip_generation_events i WHERE i.ip_digest=decode($3,'hex') AND i.usage_date=$2
        AND (i.status='succeeded' OR (i.status='reserved' AND i.reserved_until>clock_timestamp()))) AS ip_count,
-      (SELECT status FROM public.ai_generation_events WHERE id=$4) AS old_status`,
-    [identities[0].userId, date, ipDigest, old.reservation_id],
+      (SELECT status FROM public.ai_generation_events WHERE id=$4) AS old_status,
+      (SELECT status FROM public.ai_generation_events WHERE id=$5) AS replacement_status`,
+    [identities[0].userId, date, ipDigest, old.reservation_id, replacement.reservation_id],
   );
-  assert.deepEqual(totals.rows[0], { account_count: 20, ip_count: 100, old_status: "expired" });
+  assert.deepEqual(totals.rows[0], {
+    account_count: 20,
+    ip_count: 100,
+    old_status: "expired",
+    replacement_status: "succeeded",
+  });
 });
 
 check("normal finalization is idempotent and conflicting final status is rejected", async ({ client, connect }) => {

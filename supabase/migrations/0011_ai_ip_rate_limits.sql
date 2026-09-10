@@ -519,6 +519,10 @@ BEGIN
     AND account_event.user_id = v_user_id
   FOR UPDATE OF account_event, ip_event;
 
+  -- The row lock may have waited past reserved_until, so use the database clock
+  -- observed after both reservation rows are locked for the expiry decision.
+  v_now := clock_timestamp();
+
   IF NOT FOUND
     OR v_stored_key_version <> p_key_version
     OR v_account_usage_date IS DISTINCT FROM p_usage_date
