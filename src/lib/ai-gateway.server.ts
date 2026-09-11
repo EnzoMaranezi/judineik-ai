@@ -12,6 +12,9 @@ const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
 const NVIDIA_PRIMARY_MODEL = "openai/gpt-oss-20b";
 const NVIDIA_FALLBACK_MODEL = "openai/gpt-oss-120b";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+const NVIDIA_PROVIDER_TIMEOUT_MS = 60_000;
+const OPENROUTER_PROVIDER_TIMEOUT_MS = 45_000;
+const AI_SDK_MAX_RETRIES = 0;
 
 type AiGenerationRequest = {
   system: string;
@@ -48,14 +51,29 @@ function availableProviderAttempts(): AiProviderAttempt[] {
 
   if (process.env["NVIDIA_API_KEY"]) {
     attempts.push(
-      { provider: "nvidia", model: NVIDIA_PRIMARY_MODEL, label: "nvidia-primary" },
-      { provider: "nvidia", model: NVIDIA_FALLBACK_MODEL, label: "nvidia-fallback" },
+      {
+        provider: "nvidia",
+        model: NVIDIA_PRIMARY_MODEL,
+        label: "nvidia-primary",
+        timeoutMs: NVIDIA_PROVIDER_TIMEOUT_MS,
+      },
+      {
+        provider: "nvidia",
+        model: NVIDIA_FALLBACK_MODEL,
+        label: "nvidia-fallback",
+        timeoutMs: NVIDIA_PROVIDER_TIMEOUT_MS,
+      },
     );
   }
 
   const openRouterModel = process.env["OPENROUTER_MODEL"];
   if (process.env["OPENROUTER_API_KEY"] && openRouterModel) {
-    attempts.push({ provider: "openrouter", model: openRouterModel, label: "openrouter-fallback" });
+    attempts.push({
+      provider: "openrouter",
+      model: openRouterModel,
+      label: "openrouter-fallback",
+      timeoutMs: OPENROUTER_PROVIDER_TIMEOUT_MS,
+    });
   }
 
   return attempts;
@@ -102,7 +120,7 @@ export async function generateAiText({
   try {
     return await runAiProviderChain({
       attempts,
-      generate: async (attempt) => {
+      generate: async (attempt, context) => {
         const provider = providerForAttempt(attempt);
         if (!provider) throw new Error("Provider is not configured.");
 
@@ -110,6 +128,9 @@ export async function generateAiText({
           model: provider(attempt.model),
           system: messages.system,
           prompt: messages.prompt,
+          maxRetries: AI_SDK_MAX_RETRIES,
+          abortSignal: context.abortSignal,
+          timeout: context.timeoutMs,
           ...(maxOutputTokens === undefined ? {} : { maxOutputTokens }),
           ...(attempt.provider === "nvidia" && reasoningEffort
             ? { providerOptions: { nvidia: { reasoningEffort } } }

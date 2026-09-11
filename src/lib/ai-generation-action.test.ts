@@ -150,3 +150,37 @@ test("does not issue a conflicting second finalization when finalization itself 
   );
   assert.deepEqual(finished, ["succeeded"]);
 });
+
+test("a provider timeout aborts the request and finalizes the reservation as failed", async () => {
+  const finished: string[] = [];
+  let providerAborted = false;
+
+  await assert.rejects(
+    runReservedAiGeneration({
+      reserve: async () => "reservation",
+      generate: () =>
+        runAiProviderChain({
+          attempts: [{ provider: "nvidia", model: "primary", label: "primary", timeoutMs: 10 }],
+          generate: async (_attempt, context) =>
+            new Promise<string>((_resolve, reject) => {
+              context.abortSignal.addEventListener(
+                "abort",
+                () => {
+                  providerAborted = true;
+                  reject(context.abortSignal.reason);
+                },
+                { once: true },
+              );
+            }),
+          totalTimeoutMs: 20,
+        }),
+      finish: async (_reservation, status) => {
+        finished.push(status);
+      },
+    }),
+    /AI_PROVIDERS_UNAVAILABLE/,
+  );
+
+  assert.equal(providerAborted, true);
+  assert.deepEqual(finished, ["failed"]);
+});

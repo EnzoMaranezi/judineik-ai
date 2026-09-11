@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   AI_PROVIDERS_UNAVAILABLE,
+  AI_PROVIDER_ATTEMPT_TIMEOUT,
   runAiProviderChain,
   type AiProviderAttempt,
 } from "./ai-provider-chain.ts";
@@ -134,4 +135,101 @@ test("does not invoke fallback after a provider has returned text that later fai
     if (text === "malformed markdown") throw new Error("parser failure");
   }, /parser failure/);
   assert.deepEqual(called, ["nvidia-primary"]);
+});
+
+test("a slow provider can still succeed within its explicit deadline", async () => {
+  const result = await runAiProviderChain({
+    attempts: [{ ...attempts[0]!, timeoutMs: 100 }],
+    generate: async () => {
+      await new Promise((resolve) => globalThis.setTimeout(resolve, 10));
+      return "slow success";
+    },
+    totalTimeoutMs: 150,
+  });
+
+  assert.equal(result, "slow success");
+});
+
+test("aborts a provider that never responds and falls back", async () => {
+  let primaryAborted = false;
+  const called: string[] = [];
+  const result = await runAiProviderChain({
+    attempts: [
+      { ...attempts[0]!, timeoutMs: 10 },
+      { ...attempts[1]!, timeoutMs: 100 },
+    ],
+    generate: async (attempt, context) => {
+      called.push(attempt.label);
+      if (attempt.label === "nvidia-primary") {
+        return new Promise<string>((_resolve, reject) => {
+          context.abortSignal.addEventListener(
+            "abort",
+            () => {
+              primaryAborted = true;
+              reject(context.abortSignal.reason);
+            },
+            { once: true },
+          );
+        });
+      }
+      return "fallback success";
+    },
+    totalTimeoutMs: 150,
+  });
+
+  assert.equal(result, "fallback success");
+  assert.equal(primaryAborted, true);
+  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+});
+
+test("falls through both timed-out NVIDIA models to OpenRouter", async () => {
+  const called: string[] = [];
+  const result = await runAiProviderChain({
+    attempts: attempts.map((attempt) => ({ ...attempt, timeoutMs: 10 })),
+    generate: async (attempt) => {
+      called.push(attempt.label);
+      if (attempt.provider === "nvidia") return new Promise<string>(() => undefined);
+      return "openrouter success";
+    },
+    totalTimeoutMs: 100,
+  });
+
+  assert.equal(result, "openrouter success");
+  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback", "openrouter-fallback"]);
+});
+
+test("stops at the global provider budget", async () => {
+  const called: string[] = [];
+  await assert.rejects(
+    runAiProviderChain({
+      attempts: attempts.map((attempt) => ({ ...attempt, timeoutMs: 40 })),
+      generate: async (attempt) => {
+        called.push(attempt.label);
+        return new Promise<string>(() => undefined);
+      },
+      totalTimeoutMs: 25,
+    }),
+    new Error(AI_PROVIDERS_UNAVAILABLE),
+  );
+
+  assert.deepEqual(called, ["nvidia-primary"]);
+});
+
+test("logs provider start before a hung request and its bounded timeout", async () => {
+  const events: Array<{ outcome: string; category: string }> = [];
+  await assert.rejects(
+    runAiProviderChain({
+      attempts: [{ ...attempts[0]!, timeoutMs: 10 }],
+      generate: async () => new Promise<string>(() => undefined),
+      onAttempt: (event) => events.push(event),
+      totalTimeoutMs: 20,
+    }),
+    new Error(AI_PROVIDERS_UNAVAILABLE),
+  );
+
+  assert.deepEqual(events.map(({ outcome, category }) => ({ outcome, category })), [
+    { outcome: "started", category: "started" },
+    { outcome: "failure", category: "transient" },
+  ]);
+  assert.equal(AI_PROVIDER_ATTEMPT_TIMEOUT.includes("TIMEOUT"), true);
 });
