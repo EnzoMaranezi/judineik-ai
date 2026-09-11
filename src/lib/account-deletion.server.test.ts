@@ -162,9 +162,13 @@ test("two simultaneous deletion workers converge on idempotent external operatio
 
 test("server contract accepts no browser user_id and keeps service role server-only", async () => {
   const source = await readFile(new URL("./account-deletion.server.ts", import.meta.url), "utf8");
+  const route = await readFile(new URL("../routes/api.account-deletion.tsx", import.meta.url), "utf8");
   assert.match(source, /createServerFn\(\{ method: "POST" \}\)/);
   assert.doesNotMatch(source, /\.validator\(|data\.userId|p_user_id/);
   assert.match(source, /process\.env\["SUPABASE_SERVICE_ROLE_KEY"\]/);
   assert.doesNotMatch(source, /VITE_SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(source, /status === "storage_cleared"[\s\S]*\.in\("status", \["pending", "storage_cleared"\]\)/);
+  assert.match(route, /createFileRoute\("\/api\/account-deletion"\)/);
+  assert.match(route, /POST: async/);
+  assert.doesNotMatch(route, /GET:|userId|SUPABASE_SERVICE_ROLE_KEY|VITE_/);
 });

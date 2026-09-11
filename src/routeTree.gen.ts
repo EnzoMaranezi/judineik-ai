@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ApiAccountDeletionRouteImport } from './routes/api.account-deletion'
 import { Route as ApiAiIpRetentionRouteImport } from './routes/api.ai-ip-retention'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppMaterialRouteImport } from './routes/app.material'
@@ -43,6 +44,11 @@ const AppRoute = AppRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAccountDeletionRoute = ApiAccountDeletionRouteImport.update({
+  id: '/api/account-deletion',
+  path: '/api/account-deletion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAiIpRetentionRoute = ApiAiIpRetentionRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/api/account-deletion': typeof ApiAccountDeletionRoute
   '/api/ai-ip-retention': typeof ApiAiIpRetentionRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/api/account-deletion': typeof ApiAccountDeletionRoute
   '/api/ai-ip-retention': typeof ApiAiIpRetentionRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/api/account-deletion': typeof ApiAccountDeletionRoute
   '/api/ai-ip-retention': typeof ApiAiIpRetentionRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/api/account-deletion'
     | '/api/ai-ip-retention'
     | '/app/material'
     | '/app/materials'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/api/account-deletion'
     | '/api/ai-ip-retention'
     | '/app/material'
     | '/app/materials'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/api/account-deletion'
     | '/api/ai-ip-retention'
     | '/app/material'
     | '/app/materials'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiAccountDeletionRoute: typeof ApiAccountDeletionRoute
   ApiAiIpRetentionRoute: typeof ApiAiIpRetentionRoute
   AuthResetRoute: typeof AuthResetRoute
 }
@@ -296,6 +309,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/account-deletion': {
+      id: '/api/account-deletion'
+      path: '/api/account-deletion'
+      fullPath: '/api/account-deletion'
+      preLoaderRoute: typeof ApiAccountDeletionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ai-ip-retention': {
@@ -463,6 +483,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiAccountDeletionRoute: ApiAccountDeletionRoute,
   ApiAiIpRetentionRoute: ApiAiIpRetentionRoute,
   AuthResetRoute: AuthResetRoute,
 }

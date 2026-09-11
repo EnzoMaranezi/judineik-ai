@@ -1,18 +1,21 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
-import { executeAccountDeletion } from "../src/lib/account-deletion.ts";
 
 const PREVIEW_PROJECT_REF = "uvjykxydgzodxljlhthq";
 const url = process.env.SUPABASE_URL;
 const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const previewUrl = process.env.NEXA_PREVIEW_URL;
 
-if (!url || !publishableKey || !serviceRoleKey) {
+if (!url || !publishableKey || !serviceRoleKey || !previewUrl) {
   throw new Error("Preview account-deletion test environment is incomplete.");
 }
 if (new URL(url).hostname.split(".")[0] !== PREVIEW_PROJECT_REF) {
   throw new Error("Refusing to run account-deletion integration tests outside the isolated Preview project.");
+}
+if (!new URL(previewUrl).hostname.endsWith(".vercel.app") || previewUrl.includes("nexaai-gamma")) {
+  throw new Error("Refusing to run account-deletion integration tests outside a Vercel Preview.");
 }
 
 const admin = createClient(url, serviceRoleKey, {
@@ -34,54 +37,21 @@ async function createSyntheticIdentity() {
   });
   const { error: signInError } = await userClient.auth.signInWithPassword({ email, password });
   if (signInError) throw new Error("Synthetic Auth sign-in failed.");
-  return { userId: created.user.id, userClient };
+  const { data: sessionData } = await userClient.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error("Synthetic Auth token unavailable.");
+  return { userId: created.user.id, userClient, accessToken };
 }
 
-function deletionDependencies(userId, userClient) {
-  const bucket = admin.storage.from("documents");
-  return {
-    begin: async () => {
-      const { data, error } = await userClient.rpc("begin_account_deletion");
-      if (error) throw new Error("Account-deletion marker failed.");
-      return data;
+async function deleteThroughPreview(accessToken) {
+  return fetch(`${previewUrl}/api/account-deletion`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      origin: new URL(previewUrl).origin,
+      "sec-fetch-site": "same-origin",
     },
-    storage: {
-      list: async (prefix, options) => {
-        const { data, error } = await bucket.list(prefix, {
-          limit: options.limit,
-          offset: options.offset,
-          sortBy: { column: "name", order: "asc" },
-        });
-        if (error) throw new Error("Synthetic Storage listing failed.");
-        return (data ?? []).map((entry) => ({ id: entry.id, name: entry.name }));
-      },
-      remove: async (paths) => {
-        const { error } = await bucket.remove(paths);
-        if (error) throw new Error("Synthetic Storage removal failed.");
-      },
-    },
-    updateStatus: async (status) => {
-      let update = admin
-        .from("account_deletion_requests")
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq("user_id", userId);
-      if (status === "storage_cleared") {
-        update = update.in("status", ["pending", "storage_cleared"]);
-      }
-      const { error } = await update;
-      if (error) throw new Error("Synthetic account-deletion status update failed.");
-    },
-    deleteAuthUser: async () => {
-      const { error } = await admin.auth.admin.deleteUser(userId, false);
-      if (!error) return "deleted";
-      if (error.status === 404 || error.code === "user_not_found" || /user not found/i.test(error.message)) {
-        return "already_missing";
-      }
-      const { data } = await admin.auth.admin.getUserById(userId);
-      if (!data.user) return "already_missing";
-      throw new Error("Synthetic Auth deletion failed.");
-    },
-  };
+  });
 }
 
 async function insert(table, values) {
@@ -235,7 +205,8 @@ async function main() {
   try {
     const empty = await createSyntheticIdentity();
     createdUsers.add(empty.userId);
-    await executeAccountDeletion(empty.userId, deletionDependencies(empty.userId, empty.userClient));
+    const emptyResponse = await deleteThroughPreview(empty.accessToken);
+    assert.equal(emptyResponse.status, 200);
     await assertAccountRemoved(empty.userId);
     createdUsers.delete(empty.userId);
     console.log("ok - empty synthetic Preview account deleted idempotently");
@@ -250,10 +221,11 @@ async function main() {
     await verifyOldJwtIsBlocked(complete, fixture);
 
     const results = await Promise.allSettled([
-      executeAccountDeletion(complete.userId, deletionDependencies(complete.userId, complete.userClient)),
-      executeAccountDeletion(complete.userId, deletionDependencies(complete.userId, complete.userClient)),
+      deleteThroughPreview(complete.accessToken),
+      deleteThroughPreview(complete.accessToken),
     ]);
     assert.ok(results.every((result) => result.status === "fulfilled"));
+    assert.ok(results.every((result) => result.status === "fulfilled" && result.value.status === 200));
     await assertAccountRemoved(complete.userId, fixture.storagePath);
     createdUsers.delete(complete.userId);
     console.log("ok - complete synthetic Preview account cascade, Storage cleanup, old-JWT block, and concurrent retry");
