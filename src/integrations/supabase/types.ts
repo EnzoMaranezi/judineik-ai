@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          created_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_generation_events: {
         Row: {
           action_id: string | null
@@ -409,6 +430,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      begin_account_deletion: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       cleanup_ai_ip_generation_events: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -456,6 +481,10 @@ export type Database = {
           used_count: number
           limit_count: number
         }[]
+      }
+      is_account_active: {
+        Args: { p_user_id: string }
+        Returns: boolean
       }
       reserve_ai_generation: {
         Args: {

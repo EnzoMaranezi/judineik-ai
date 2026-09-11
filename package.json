@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "node --test --experimental-strip-types src/**/*.test.ts",
     "test:postgres:ai-quota": "node scripts/test-ai-ip-quota-postgres.mjs",
+    "test:postgres:account-deletion": "node scripts/test-account-deletion-postgres.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
