@@ -11,6 +11,7 @@
     "test": "node --test --experimental-strip-types src/**/*.test.ts",
     "test:postgres:ai-quota": "node scripts/test-ai-ip-quota-postgres.mjs",
     "test:postgres:account-deletion": "node scripts/test-account-deletion-postgres.mjs",
+    "test:preview:account-deletion": "node --experimental-strip-types scripts/test-account-deletion-preview.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
