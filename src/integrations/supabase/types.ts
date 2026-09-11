@@ -409,6 +409,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_ai_ip_generation_events: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       finish_ai_generation: {
         Args: {
           p_authorization: string

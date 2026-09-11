@@ -146,12 +146,19 @@ histórico; a migration atual aceita somente a versão `1`.
 
 ### Retenção da quota de rede
 
-A reserva não executa limpeza. Depois de aplicar `0011`, habilite `pg_cron` no projeto e execute,
-uma única vez, `operations/schedule_ai_ip_quota_retention.sql`. O job diário chama
-`cleanup_ai_ip_generation_events()` como proprietário do banco. A função não pode ser executada por
-`PUBLIC`, `anon`, `authenticated` ou `service_role`, remove apenas eventos com mais de sete dias e
-nunca remove o dia UTC atual. Confirme o job em `cron.job` e monitore `cron.job_run_details` durante
-o rollout.
+A reserva não executa limpeza. A função `cleanup_ai_ip_generation_events()` remove somente eventos
+com mais de sete dias e nunca remove o dia UTC atual. Ela permanece indisponível para `PUBLIC`,
+`anon` e `authenticated`.
+
+Quando `pg_cron` não estiver disponível, a migration `0012` concede execução somente a `service_role`
+para a rota interna `/api/ai-ip-retention`. Essa rota só aceita o Bearer token do Vercel Cron e exige
+que `AI_RETENTION_CRON_SECRET` e `CRON_SECRET` sejam o mesmo segredo server-only. O job é declarado
+em `vercel.json` para execução diária às `03:17 UTC`; no plano Hobby, a Vercel pode executá-lo em
+qualquer momento daquela hora. A chamada é idempotente e não recebe parâmetros nem acesso direto a
+tabelas de quota.
+
+`operations/schedule_ai_ip_quota_retention.sql` continua disponível apenas para projetos com
+`pg_cron`; não habilite os dois mecanismos no mesmo ambiente.
 
 Para validar `0011` sem acessar Supabase remoto, execute `npm run test:postgres:ai-quota`. O comando
 inicia um PostgreSQL 18 efêmero somente em loopback, aplica uma base Supabase mínima e a migration,

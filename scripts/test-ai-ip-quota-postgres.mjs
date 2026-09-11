@@ -680,6 +680,16 @@ async function main() {
     await client.query(fixtureSql);
     const migration = await readFile(new URL("../supabase/migrations/0011_ai_ip_rate_limits.sql", import.meta.url), "utf8");
     await client.query(migration);
+    const retentionAutomation = await readFile(
+      new URL("../supabase/migrations/0012_ai_ip_retention_automation.sql", import.meta.url),
+      "utf8",
+    );
+    await client.query(retentionAutomation);
+    const retentionPrivileges = await client.query(
+      `SELECT has_function_privilege('service_role', 'public.cleanup_ai_ip_generation_events()', 'EXECUTE') AS can_cleanup,
+              has_table_privilege('service_role', 'public.ai_ip_generation_events', 'DELETE') AS can_delete_ip_events`,
+    );
+    assert.deepEqual(retentionPrivileges.rows[0], { can_cleanup: true, can_delete_ip_events: false });
     const retentionJob = await readFile(new URL("../supabase/operations/schedule_ai_ip_quota_retention.sql", import.meta.url), "utf8");
     await client.query(retentionJob);
     await client.query(retentionJob);

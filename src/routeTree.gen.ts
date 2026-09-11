@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ApiAiIpRetentionRouteImport } from './routes/api.ai-ip-retention'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppMaterialRouteImport } from './routes/app.material'
 import { Route as AppMaterialsRouteImport } from './routes/app.materials'
@@ -42,6 +43,11 @@ const AppRoute = AppRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiIpRetentionRoute = ApiAiIpRetentionRouteImport.update({
+  id: '/api/ai-ip-retention',
+  path: '/api/ai-ip-retention',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/api/ai-ip-retention': typeof ApiAiIpRetentionRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/plan': typeof AppPlanRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/api/ai-ip-retention': typeof ApiAiIpRetentionRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/plan': typeof AppPlanRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/api/ai-ip-retention': typeof ApiAiIpRetentionRoute
   '/app/material': typeof AppMaterialRoute
   '/app/materials': typeof AppMaterialsRoute
   '/app/plan': typeof AppPlanRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/api/ai-ip-retention'
     | '/app/material'
     | '/app/materials'
     | '/app/plan'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/api/ai-ip-retention'
     | '/app/material'
     | '/app/materials'
     | '/app/plan'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/api/ai-ip-retention'
     | '/app/material'
     | '/app/materials'
     | '/app/plan'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiAiIpRetentionRoute: typeof ApiAiIpRetentionRoute
   AuthResetRoute: typeof AuthResetRoute
 }
 
@@ -283,6 +296,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-ip-retention': {
+      id: '/api/ai-ip-retention'
+      path: '/api/ai-ip-retention'
+      fullPath: '/api/ai-ip-retention'
+      preLoaderRoute: typeof ApiAiIpRetentionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiAiIpRetentionRoute: ApiAiIpRetentionRoute,
   AuthResetRoute: AuthResetRoute,
 }
 export const routeTree = rootRouteImport
