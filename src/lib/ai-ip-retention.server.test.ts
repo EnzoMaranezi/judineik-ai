@@ -13,9 +13,14 @@ const env = {
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
 };
 
-function cronRequest(value?: string) {
+function cronRequest(value?: string, usePreviewHeader = false) {
   return new Request("https://nexa.example/api/ai-ip-retention", {
-    headers: value === undefined ? {} : { authorization: `Bearer ${value}` },
+    headers:
+      value === undefined
+        ? {}
+        : usePreviewHeader
+          ? { "x-ai-retention-cron-secret": value }
+          : { authorization: `Bearer ${value}` },
   });
 }
 
@@ -54,6 +59,19 @@ test("retention cron executes the fixed cleanup with valid authorization", async
 
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true });
+  assert.equal(calls, 1);
+});
+
+test("retention cron accepts the alternate header needed by protected Preview deployments", async () => {
+  let calls = 0;
+  const response = await handleAiIpRetentionCron(cronRequest(secret, true), {
+    env,
+    cleanup: async () => {
+      calls += 1;
+    },
+  });
+
+  assert.equal(response.status, 200);
   assert.equal(calls, 1);
 });
 

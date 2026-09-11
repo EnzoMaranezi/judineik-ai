@@ -46,8 +46,12 @@ function retentionCronSecret(env: RetentionEnvironment): string {
 
 export function isAuthorizedAiIpRetentionCron(request: Request, secret: string): boolean {
   const authorization = request.headers.get("authorization");
+  const previewAuthorization = request.headers.get("x-ai-retention-cron-secret");
   const expected = `Bearer ${secret}`;
-  return authorization !== null && constantTimeEqual(authorization, expected);
+  return (
+    (authorization !== null && constantTimeEqual(authorization, expected)) ||
+    (previewAuthorization !== null && constantTimeEqual(previewAuthorization, secret))
+  );
 }
 
 async function cleanupAiIpGenerationEvents(env: RetentionEnvironment): Promise<void> {
