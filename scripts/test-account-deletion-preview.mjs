@@ -50,28 +50,33 @@ async function deleteThroughPreview(accessToken) {
   const npmExecPath = process.env["npm_execpath"];
   if (!npmExecPath) throw new Error("npm executable path is unavailable.");
   const npxCliPath = npmExecPath.replace(/npm-cli\.js$/, "npx-cli.js");
-  const { stdout } = await execFileAsync(process.execPath, [
-    npxCliPath,
-    "--yes",
-    "vercel@latest",
-    "curl",
-    "/api/account-deletion",
-    "--deployment",
-    previewUrl,
-    "--yes",
-    "--",
-    "--silent",
-    "--request",
-    "POST",
-    "--header",
-    `Authorization: Bearer ${accessToken}`,
-    "--header",
-    `Origin: ${new URL(previewUrl).origin}`,
-    "--header",
-    "Sec-Fetch-Site: same-origin",
-  ], {
-    maxBuffer: 1024 * 1024,
-  });
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync(process.execPath, [
+      npxCliPath,
+      "--yes",
+      "vercel@latest",
+      "curl",
+      "/api/account-deletion",
+      "--deployment",
+      previewUrl,
+      "--yes",
+      "--",
+      "--silent",
+      "--request",
+      "POST",
+      "--header",
+      `Authorization: Bearer ${accessToken}`,
+      "--header",
+      `Origin: ${new URL(previewUrl).origin}`,
+      "--header",
+      "Sec-Fetch-Site: same-origin",
+    ], {
+      maxBuffer: 1024 * 1024,
+    }));
+  } catch {
+    throw new Error("Preview account deletion request failed.");
+  }
   const payload = JSON.parse(stdout.trim());
   return payload.deleted === true;
 }
