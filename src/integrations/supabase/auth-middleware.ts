@@ -36,9 +36,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
-export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
-  async ({ next }) => {
-
+export async function authenticateSupabaseRequest(request: Request) {
     const SUPABASE_URL = process.env['SUPABASE_URL'];
     const SUPABASE_PUBLISHABLE_KEY = process.env['SUPABASE_PUBLISHABLE_KEY'];
 
@@ -51,8 +49,6 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       console.error(`[Supabase] ${message}`);
       throw new Error(message);
     }
-
-    const request = getRequest();
 
     if (!request?.headers) {
       throw new Error('Unauthorized: No request headers available');
@@ -115,12 +111,19 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: No user ID found in token');
     }
 
+    return {
+      supabase,
+      userId: claims.sub,
+      claims,
+    };
+}
+
+export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
+  async ({ next }) => {
+    const request = getRequest();
+    const context = await authenticateSupabaseRequest(request);
     return next({
-      context: {
-        supabase,
-        userId: claims.sub,
-        claims,
-      },
+      context,
     });
   },
 );

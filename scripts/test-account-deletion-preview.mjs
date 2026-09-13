@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
+import { promisify } from "node:util";
 import { createClient } from "@supabase/supabase-js";
 
 const PREVIEW_PROJECT_REF = "uvjykxydgzodxljlhthq";
@@ -21,6 +23,7 @@ if (!new URL(previewUrl).hostname.endsWith(".vercel.app") || previewUrl.includes
 const admin = createClient(url, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+const execFileAsync = promisify(execFile);
 
 async function createSyntheticIdentity() {
   const email = `account-deletion-${randomUUID()}@example.invalid`;
@@ -44,14 +47,33 @@ async function createSyntheticIdentity() {
 }
 
 async function deleteThroughPreview(accessToken) {
-  return fetch(`${previewUrl}/api/account-deletion`, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${accessToken}`,
-      origin: new URL(previewUrl).origin,
-      "sec-fetch-site": "same-origin",
-    },
+  const npmExecPath = process.env["npm_execpath"];
+  if (!npmExecPath) throw new Error("npm executable path is unavailable.");
+  const npxCliPath = npmExecPath.replace(/npm-cli\.js$/, "npx-cli.js");
+  const { stdout } = await execFileAsync(process.execPath, [
+    npxCliPath,
+    "--yes",
+    "vercel@latest",
+    "curl",
+    "/api/account-deletion",
+    "--deployment",
+    previewUrl,
+    "--yes",
+    "--",
+    "--silent",
+    "--request",
+    "POST",
+    "--header",
+    `Authorization: Bearer ${accessToken}`,
+    "--header",
+    `Origin: ${new URL(previewUrl).origin}`,
+    "--header",
+    "Sec-Fetch-Site: same-origin",
+  ], {
+    maxBuffer: 1024 * 1024,
   });
+  const payload = JSON.parse(stdout.trim());
+  return payload.deleted === true;
 }
 
 async function insert(table, values) {
@@ -176,7 +198,9 @@ async function verifyOldJwtIsBlocked(identity, fixture) {
 
 async function assertAccountRemoved(userId, storagePath) {
   const { data: authResult } = await admin.auth.admin.getUserById(userId);
-  assert.equal(authResult.user, null);
+  if (authResult.user) {
+    throw new Error("Synthetic Auth user still exists after deletion.");
+  }
 
   for (const table of [
     "documents",
@@ -206,7 +230,7 @@ async function main() {
     const empty = await createSyntheticIdentity();
     createdUsers.add(empty.userId);
     const emptyResponse = await deleteThroughPreview(empty.accessToken);
-    assert.equal(emptyResponse.status, 200);
+    assert.equal(emptyResponse, true);
     await assertAccountRemoved(empty.userId);
     createdUsers.delete(empty.userId);
     console.log("ok - empty synthetic Preview account deleted idempotently");
@@ -225,7 +249,7 @@ async function main() {
       deleteThroughPreview(complete.accessToken),
     ]);
     assert.ok(results.every((result) => result.status === "fulfilled"));
-    assert.ok(results.every((result) => result.status === "fulfilled" && result.value.status === 200));
+    assert.ok(results.every((result) => result.status === "fulfilled" && result.value === true));
     await assertAccountRemoved(complete.userId, fixture.storagePath);
     createdUsers.delete(complete.userId);
     console.log("ok - complete synthetic Preview account cascade, Storage cleanup, old-JWT block, and concurrent retry");

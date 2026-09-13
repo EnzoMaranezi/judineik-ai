@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  authenticateSupabaseRequest,
+  requireSupabaseAuth,
+} from "@/integrations/supabase/auth-middleware";
 import {
   ACCOUNT_DELETION_UNAVAILABLE,
   ACCOUNT_REAUTHENTICATION_REQUIRED,
@@ -84,19 +87,43 @@ function createProductionDependencies(
   };
 }
 
+async function runAccountDeletion(
+  request: Request,
+  userId: string,
+  userClient: ReturnType<typeof createClient<Database>>,
+) {
+  assertTrustedAccountDeletionRequest(request);
+
+  try {
+    return await executeAccountDeletion(
+      userId,
+      createProductionDependencies(userId, userClient),
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === ACCOUNT_REAUTHENTICATION_REQUIRED) throw error;
+    console.error("[Account deletion] Account deletion could not be completed.");
+    throw new Error(ACCOUNT_DELETION_UNAVAILABLE);
+  }
+}
+
+export async function handleAccountDeletionRequest(request: Request): Promise<Response> {
+  try {
+    const context = await authenticateSupabaseRequest(request);
+    await runAccountDeletion(request, context.userId, context.supabase);
+    return Response.json({ deleted: true });
+  } catch (error) {
+    const code = error instanceof Error && error.message.includes(ACCOUNT_REAUTHENTICATION_REQUIRED)
+      ? ACCOUNT_REAUTHENTICATION_REQUIRED
+      : ACCOUNT_DELETION_UNAVAILABLE;
+    return Response.json(
+      { deleted: false, code },
+      { status: code === ACCOUNT_REAUTHENTICATION_REQUIRED ? 403 : 503 },
+    );
+  }
+}
+
 export const deleteCurrentAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    assertTrustedAccountDeletionRequest(getRequest());
-
-    try {
-      return await executeAccountDeletion(
-        context.userId,
-        createProductionDependencies(context.userId, context.supabase),
-      );
-    } catch (error) {
-      if (error instanceof Error && error.message === ACCOUNT_REAUTHENTICATION_REQUIRED) throw error;
-      console.error("[Account deletion] Account deletion could not be completed.");
-      throw new Error(ACCOUNT_DELETION_UNAVAILABLE);
-    }
+    return runAccountDeletion(getRequest(), context.userId, context.supabase);
   });
