@@ -1,9 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppCard, AppLabel, GhostButton, PrimaryButton } from "@/components/app/ui";
+import { AccountDeletionForm } from "@/components/app/AccountDeletionForm";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { clearNexaBrowserState } from "@/lib/account-deletion-client";
 import { getUserLocale, SUPPORTED_LOCALES, translate, type Locale, useI18n } from "@/lib/i18n";
-import { useAuth } from "@/hooks/useAuth";
+import { setPasswordRecoveryPending, useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 import {
   authErrorMessage,
   updateDisplayName,
@@ -25,6 +37,7 @@ export const Route = createFileRoute("/app/settings")({
 
 function SettingsPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { locale, setLocale, t } = useI18n();
   const [name, setName] = useState("");
   const [selectedLocale, setSelectedLocale] = useState<Locale>(locale);
@@ -34,6 +47,8 @@ function SettingsPage() {
   const [busy, setBusy] = useState<"name" | "language" | "password" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletionLocked, setDeletionLocked] = useState(false);
 
   useEffect(() => {
     setName(readDisplayName(user?.user_metadata) ?? "");
@@ -122,6 +137,15 @@ function SettingsPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  async function finishAccountDeletion() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    clearNexaBrowserState();
+    setPasswordRecoveryPending(false);
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+    window.location.replace("/");
   }
 
   return (
@@ -239,7 +263,48 @@ function SettingsPage() {
             <GhostButton disabled>{t("settings.upgradeComingSoon")}</GhostButton>
           </div>
         </AppCard>
+
+        <AppCard className="border-destructive/35">
+          <AppLabel>{t("settings.deleteAccount")}</AppLabel>
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
+            <div className="max-w-xl">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {t("settings.deleteAccountDescription")}
+              </p>
+              <p className="mt-2 text-sm font-medium text-destructive">{t("settings.deleteAccountWarning")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-destructive/50 px-5 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+            >
+              {t("settings.deleteAccount")}
+            </button>
+          </div>
+        </AppCard>
       </section>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => !deletionLocked && setDeleteDialogOpen(open)}>
+        <AlertDialogContent onEscapeKeyDown={(event) => {
+          if (deletionLocked) event.preventDefault();
+        }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("settings.deleteAccountDialogTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("settings.deleteAccountDialogDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          {user?.email && user.id ? (
+            <AccountDeletionForm
+              email={user.email}
+              userId={user.id}
+              onDeleted={finishAccountDeletion}
+              onLockedChange={setDeletionLocked}
+            />
+          ) : null}
+          <div className="flex justify-end">
+            <AlertDialogCancel disabled={deletionLocked}>{t("common.cancel")}</AlertDialogCancel>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

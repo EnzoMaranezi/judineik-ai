@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
+import { AccountDeletionPending } from "@/components/app/AccountDeletionPending";
 import { isPasswordRecoveryPending } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 
@@ -14,7 +15,10 @@ export const Route = createFileRoute("/app")({
     if (error || !data.user) {
       throw redirect({ to: "/auth", search: { redirect: location.href } });
     }
-    return { user: data.user };
+    const { data: active, error: accountStateError } = await supabase.rpc("is_account_active", {
+      p_user_id: data.user.id,
+    });
+    return { user: data.user, accountDeletionPending: !accountStateError && active === false };
   },
 
   head: () => ({
@@ -36,6 +40,11 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
+  const { user, accountDeletionPending } = Route.useRouteContext();
+  if (accountDeletionPending) {
+    return <AccountDeletionPending email={user.email ?? ""} userId={user.id} />;
+  }
+
   return (
     <AppShell>
       <Outlet />
