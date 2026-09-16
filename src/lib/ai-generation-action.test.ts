@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { runReservedAiGeneration } from "./ai-generation-action.ts";
-import { runAiProviderChain, type AiProviderAttempt } from "./ai-provider-chain.ts";
+import {
+  AI_PROVIDER_CHAIN_EXHAUSTED,
+  runAiProviderChain,
+  type AiProviderAttempt,
+} from "./ai-provider-chain.ts";
 
 const attempts: AiProviderAttempt[] = [
   { provider: "nvidia", model: "primary", label: "nvidia-primary" },
@@ -124,13 +128,13 @@ test("releases a reservation when all providers fail before returning text", asy
     runReservedAiGeneration({
       reserve: async () => "reservation",
       generate: async () => {
-        throw new Error("AI_PROVIDERS_UNAVAILABLE");
+        throw new Error(AI_PROVIDER_CHAIN_EXHAUSTED);
       },
       finish: async (_reservation, status) => {
         finished.push(status);
       },
     }),
-    /AI_PROVIDERS_UNAVAILABLE/,
+    new Error(AI_PROVIDER_CHAIN_EXHAUSTED),
   );
   assert.deepEqual(finished, ["failed"]);
 });
@@ -178,7 +182,7 @@ test("a provider timeout aborts the request and finalizes the reservation as fai
         finished.push(status);
       },
     }),
-    /AI_PROVIDERS_UNAVAILABLE/,
+    new Error(AI_PROVIDER_CHAIN_EXHAUSTED),
   );
 
   assert.equal(providerAborted, true);

@@ -5,16 +5,16 @@ import {
   runAiProviderChain,
   type AiProviderAttempt,
 } from "@/lib/ai-provider-chain";
+import {
+  aiProviderConfigurationPresence,
+  resolveAiProviderConfiguration,
+  type AiProviderConfiguration,
+} from "@/lib/ai-provider-config";
 import { buildAiGenerationMessages } from "@/lib/ai-generation-messages";
 import { getUserLocale, languageInstruction, type Locale } from "@/lib/i18n";
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
-const NVIDIA_PRIMARY_MODEL = "openai/gpt-oss-20b";
-const NVIDIA_FALLBACK_MODEL = "openai/gpt-oss-120b";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
-const NVIDIA_PRIMARY_TIMEOUT_MS = 30_000;
-const NVIDIA_FALLBACK_TIMEOUT_MS = 45_000;
-const OPENROUTER_PROVIDER_TIMEOUT_MS = 40_000;
 const AI_SDK_MAX_RETRIES = 0;
 
 type AiGenerationRequest = {
@@ -32,11 +32,8 @@ type AiTextGeneration = {
   model: string;
 };
 
-function providerForAttempt(attempt: AiProviderAttempt) {
-  const apiKey =
-    attempt.provider === "nvidia"
-      ? process.env["NVIDIA_API_KEY"]
-      : process.env["OPENROUTER_API_KEY"];
+function providerForAttempt(attempt: AiProviderAttempt, config: AiProviderConfiguration) {
+  const apiKey = attempt.provider === "nvidia" ? config.nvidiaApiKey : config.openRouterApiKey;
   if (!apiKey) return null;
 
   return createOpenAICompatible({
@@ -47,37 +44,25 @@ function providerForAttempt(attempt: AiProviderAttempt) {
   });
 }
 
-function availableProviderAttempts(): AiProviderAttempt[] {
-  const attempts: AiProviderAttempt[] = [];
+function safeRuntimeMetadata(value: string | undefined, maxLength = 96) {
+  return value && value.length <= maxLength && /^[A-Za-z0-9._/-]+$/.test(value) ? value : undefined;
+}
 
-  if (process.env["NVIDIA_API_KEY"]) {
-    attempts.push(
-      {
-        provider: "nvidia",
-        model: NVIDIA_PRIMARY_MODEL,
-        label: "nvidia-primary",
-        timeoutMs: NVIDIA_PRIMARY_TIMEOUT_MS,
-      },
-      {
-        provider: "nvidia",
-        model: NVIDIA_FALLBACK_MODEL,
-        label: "nvidia-fallback",
-        timeoutMs: NVIDIA_FALLBACK_TIMEOUT_MS,
-      },
-    );
-  }
+function logUnavailableProviderConfiguration(config: AiProviderConfiguration) {
+  const vercelEnvironment = safeRuntimeMetadata(process.env["VERCEL_ENV"]);
+  const vercelRegion = safeRuntimeMetadata(process.env["VERCEL_REGION"]);
+  const commitSha = safeRuntimeMetadata(process.env["VERCEL_GIT_COMMIT_SHA"], 64);
 
-  const openRouterModel = process.env["OPENROUTER_MODEL"];
-  if (process.env["OPENROUTER_API_KEY"] && openRouterModel) {
-    attempts.push({
-      provider: "openrouter",
-      model: openRouterModel,
-      label: "openrouter-fallback",
-      timeoutMs: OPENROUTER_PROVIDER_TIMEOUT_MS,
-    });
-  }
-
-  return attempts;
+  console.error(
+    "[ai-gateway-config]",
+    JSON.stringify({
+      event: "no_provider_attempts",
+      ...aiProviderConfigurationPresence(config),
+      ...(vercelEnvironment ? { vercelEnvironment } : {}),
+      ...(vercelRegion ? { vercelRegion } : {}),
+      ...(commitSha ? { commitSha } : {}),
+    }),
+  );
 }
 
 function logProviderAttempt(
@@ -111,8 +96,13 @@ export async function generateAiText({
   maxOutputTokens,
   reasoningEffort,
 }: AiGenerationRequest): Promise<AiTextGeneration> {
-  const attempts = availableProviderAttempts();
-  if (attempts.length === 0) throw new Error(AI_PROVIDERS_UNAVAILABLE);
+  // Read server env per request. Edge-style runtimes may inject it only when handling the request.
+  const providerConfig = resolveAiProviderConfiguration(process.env);
+  const attempts = providerConfig.attempts;
+  if (attempts.length === 0) {
+    logUnavailableProviderConfiguration(providerConfig);
+    throw new Error(AI_PROVIDERS_UNAVAILABLE);
+  }
   const messages = buildAiGenerationMessages({
     system,
     prompt,
@@ -124,7 +114,7 @@ export async function generateAiText({
     return await runAiProviderChain({
       attempts,
       generate: async (attempt, context) => {
-        const provider = providerForAttempt(attempt);
+        const provider = providerForAttempt(attempt, providerConfig);
         if (!provider) throw new Error("Provider is not configured.");
 
         const result = await generateText({
@@ -144,7 +134,6 @@ export async function generateAiText({
       onAttempt: logProviderAttempt,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === AI_PROVIDERS_UNAVAILABLE) throw error;
     throw new Error("AI_PROVIDER_REQUEST_FAILED");
   }
 }

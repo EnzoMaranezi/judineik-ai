@@ -1,4 +1,5 @@
 export const AI_PROVIDERS_UNAVAILABLE = "AI_PROVIDERS_UNAVAILABLE";
+export const AI_PROVIDER_CHAIN_EXHAUSTED = "AI_PROVIDER_CHAIN_EXHAUSTED";
 export const AI_PROVIDER_ATTEMPT_TIMEOUT = "AI_PROVIDER_ATTEMPT_TIMEOUT";
 export const AI_PROVIDER_CHAIN_BUDGET_MS = 120_000;
 
@@ -291,5 +292,5 @@ export async function runAiProviderChain<T>({
     }
   }
 
-  throw new Error(AI_PROVIDERS_UNAVAILABLE);
+  throw new Error(AI_PROVIDER_CHAIN_EXHAUSTED);
 }

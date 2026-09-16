@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   AI_PROVIDER_CHAIN_BUDGET_MS,
-  AI_PROVIDERS_UNAVAILABLE,
+  AI_PROVIDER_CHAIN_EXHAUSTED,
   AI_PROVIDER_ATTEMPT_TIMEOUT,
   classifyProviderError,
   runAiProviderChain,
@@ -96,7 +96,7 @@ test("uses OpenRouter after both NVIDIA models are transiently unavailable", asy
   assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback", "openrouter-fallback"]);
 });
 
-test("returns the stable unavailable code only after all providers fail transiently", async () => {
+test("reports provider-chain exhaustion after all configured providers fail", async () => {
   await assert.rejects(
     runAiProviderChain({
       attempts,
@@ -104,7 +104,7 @@ test("returns the stable unavailable code only after all providers fail transien
         throw providerError(503);
       },
     }),
-    new Error(AI_PROVIDERS_UNAVAILABLE),
+    new Error(AI_PROVIDER_CHAIN_EXHAUSTED),
   );
 });
 
@@ -259,7 +259,7 @@ test("stops at the global provider budget", async () => {
       },
       totalTimeoutMs: 25,
     }),
-    new Error(AI_PROVIDERS_UNAVAILABLE),
+    new Error(AI_PROVIDER_CHAIN_EXHAUSTED),
   );
 
   assert.deepEqual(called, ["nvidia-primary"]);
@@ -274,7 +274,7 @@ test("logs provider start before a hung request and its bounded timeout", async 
       onAttempt: (event) => events.push(event),
       totalTimeoutMs: 20,
     }),
-    new Error(AI_PROVIDERS_UNAVAILABLE),
+    new Error(AI_PROVIDER_CHAIN_EXHAUSTED),
   );
 
   assert.deepEqual(
