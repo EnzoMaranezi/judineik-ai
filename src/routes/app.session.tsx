@@ -2,11 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { AppCard, AppLabel, EmptyState, GhostButton, PrimaryButton } from "@/components/app/ui";
+import { getDocumentTopics, STALE_TOPIC_SOURCE } from "@/lib/document-topics.functions";
 import { getDocumentReinforcementAreas } from "@/lib/questions.functions";
 import { useI18n } from "@/lib/i18n";
-import { storageService } from "@/services/storageService";
-import { getStudyAnalysisForDocument } from "@/services/studyAnalysisService";
-import type { Concept, StudyAnalysis } from "@/types/study";
+import {
+  prioritizeTopicsByReinforcement,
+  resolveStaleStudyTopicsState,
+  resolveStudyTopicsState,
+  type StudyTopic,
+  type StudyTopicsState,
+  type TopicUnavailableReason,
+} from "@/lib/study-topics-plan";
 
 export const Route = createFileRoute("/app/session")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -27,29 +33,37 @@ export const Route = createFileRoute("/app/session")({
 function Session() {
   const { documentId } = Route.useSearch();
   const { t } = useI18n();
-  const [analysis, setAnalysis] = useState<StudyAnalysis | null | undefined>(undefined);
+  const [topicState, setTopicState] = useState<StudyTopicsState | null | undefined>(undefined);
   const [step, setStep] = useState<"warmup" | "core">("warmup");
   const [weakAreaTitles, setWeakAreaTitles] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    setAnalysis(undefined);
+    setTopicState(undefined);
     setWeakAreaTitles([]);
 
     if (!documentId) {
-      setAnalysis(null);
+      setTopicState(null);
       return;
     }
 
-    const stored = storageService.getAnalysis();
-    if (stored?.documentId === documentId) setAnalysis(stored);
-
-    getStudyAnalysisForDocument(documentId)
-      .then((rebuilt) => {
-        if (!cancelled) setAnalysis(rebuilt);
+    getDocumentTopics({ data: { documentId } })
+      .then((result) => {
+        if (!cancelled) {
+          setTopicState(
+            resolveStudyTopicsState({
+              documentId,
+              documentTitle: result.document.title,
+              topics: result.topics,
+              sourceState: result.sourceState,
+            }),
+          );
+        }
       })
-      .catch(() => {
-        if (!cancelled) setAnalysis(null);
+      .catch((error) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : "";
+        setTopicState(message.includes(STALE_TOPIC_SOURCE) ? resolveStaleStudyTopicsState(documentId) : null);
       });
 
     getDocumentReinforcementAreas({ data: { documentId } })
@@ -65,8 +79,8 @@ function Session() {
     };
   }, [documentId]);
 
-  if (analysis === undefined) return null;
-  if (!analysis || !documentId) {
+  if (topicState === undefined) return null;
+  if (!topicState || !documentId) {
     return (
       <EmptyState
         title={t("session.noTitle")}
@@ -76,16 +90,19 @@ function Session() {
       />
     );
   }
+  if (topicState.status === "unavailable") {
+    return <UnavailableTopicsState documentId={topicState.documentId} reason={topicState.reason} />;
+  }
 
-  const concepts = prioritizeConcepts(analysis.concepts, weakAreaTitles);
-  const warmupConcepts = concepts.slice(0, 3);
+  const topics = prioritizeTopicsByReinforcement(topicState.topics, weakAreaTitles);
+  const warmupTopics = topics.slice(0, 3);
 
   return (
     <div className="mx-auto max-w-[860px] space-y-8">
       <header>
         <AppLabel>{t("session.guided")}</AppLabel>
-        <h1 className="display-sm mt-4">{analysis.subject}</h1>
-        <p className="mt-3 text-sm text-muted-foreground">{analysis.title}</p>
+        <h1 className="display-sm mt-4">{topicState.documentTitle}</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{t("topics.grounded")}</p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-4">
@@ -111,7 +128,7 @@ function Session() {
             {t("session.warmupBody")}
           </p>
 
-          <ConceptList concepts={warmupConcepts} />
+          <TopicList topics={warmupTopics} />
 
           <PrimaryButton className="mt-8" onClick={() => setStep("core")}>
             {t("common.continue")} <span aria-hidden>→</span>
@@ -125,7 +142,7 @@ function Session() {
             {t("session.coreBody")}
           </p>
 
-          <ConceptList concepts={concepts} />
+          <TopicList topics={topics} />
 
           <div className="mt-8 flex flex-wrap gap-3">
             <GhostButton onClick={() => setStep("warmup")}>{t("session.backWarmup")}</GhostButton>
@@ -143,19 +160,9 @@ function Session() {
   );
 }
 
-function prioritizeConcepts(concepts: Concept[], weakAreaTitles: string[]) {
-  if (weakAreaTitles.length === 0) return concepts;
-  const weak = new Set(weakAreaTitles.map((title) => title.toLowerCase()));
-  return [...concepts].sort((a, b) => {
-    const aWeak = weak.has(a.title.toLowerCase()) ? 1 : 0;
-    const bWeak = weak.has(b.title.toLowerCase()) ? 1 : 0;
-    return bWeak - aWeak;
-  });
-}
-
-function ConceptList({ concepts }: { concepts: Concept[] }) {
+function TopicList({ topics }: { topics: StudyTopic[] }) {
   const { t } = useI18n();
-  if (concepts.length === 0) {
+  if (topics.length === 0) {
     return (
       <div className="mt-6 rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
         {t("session.noConcepts")}
@@ -165,20 +172,64 @@ function ConceptList({ concepts }: { concepts: Concept[] }) {
 
   return (
     <ul className="mt-6 grid gap-3 md:grid-cols-2">
-      {concepts.map((concept, index) => (
+      {topics.map((topic, index) => (
         <motion.li
-          key={concept.id}
+          key={topic.id}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.04, duration: 0.3 }}
           className="rounded-xl border border-border bg-surface-2/40 p-4"
         >
-          <p className="text-sm">{concept.title}</p>
+          <p className="text-sm">{topic.title}</p>
           <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-            {concept.context ?? t("session.contextMissing")}
+            {topic.context || t("session.contextMissing")}
           </p>
         </motion.li>
       ))}
     </ul>
+  );
+}
+
+function UnavailableTopicsState({
+  documentId,
+  reason,
+}: {
+  documentId: string;
+  reason: TopicUnavailableReason;
+}) {
+  const { t } = useI18n();
+  const title =
+    reason === "stale"
+      ? t("topics.stale")
+      : reason === "unavailable"
+        ? t("topics.noText")
+        : reason === "too_large"
+          ? t("topics.tooLarge")
+          : reason === "insufficient"
+            ? t("topics.insufficient")
+            : t("topics.notAnalyzed");
+  const body =
+    reason === "unavailable"
+      ? t("topics.noTextBody")
+      : reason === "too_large"
+        ? t("topics.tooLargeBody")
+        : reason === "insufficient"
+          ? t("topics.insufficientBody")
+          : t("topics.aiCost");
+
+  return (
+    <div className="mx-auto max-w-[720px]">
+      <AppCard className="flex flex-col items-center gap-4 border-dashed py-14 text-center">
+        <AppLabel>{title}</AppLabel>
+        <p className="max-w-sm text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{body}</p>
+        <Link
+          to="/app/materials/$documentId/topics"
+          params={{ documentId }}
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-lime px-6 py-3 text-sm font-medium text-background transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-lime)]"
+        >
+          {t("topics.analyze")} <span aria-hidden>→</span>
+        </Link>
+      </AppCard>
+    </div>
   );
 }

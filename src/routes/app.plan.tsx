@@ -3,11 +3,17 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { AppCard, AppLabel, EmptyState, LinkButton, ProgressBar } from "@/components/app/ui";
 import { KnowledgeMap } from "@/components/app/KnowledgeMap";
+import { getDocumentTopics, STALE_TOPIC_SOURCE } from "@/lib/document-topics.functions";
 import { getDocumentReinforcementAreas } from "@/lib/questions.functions";
-import { storageService } from "@/services/storageService";
-import { getStudyAnalysisForDocument } from "@/services/studyAnalysisService";
-import type { Concept, RecommendedSession, StudyAnalysis } from "@/types/study";
 import { useI18n } from "@/lib/i18n";
+import {
+  buildTopicSessionStructure,
+  getKnowledgeMapTopics,
+  resolveStaleStudyTopicsState,
+  resolveStudyTopicsState,
+  type StudyTopicsState,
+  type TopicUnavailableReason,
+} from "@/lib/study-topics-plan";
 
 export const Route = createFileRoute("/app/plan")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -28,7 +34,7 @@ export const Route = createFileRoute("/app/plan")({
 function Plan() {
   const { documentId } = Route.useSearch();
   const { t } = useI18n();
-  const [analysis, setAnalysis] = useState<StudyAnalysis | null | undefined>(undefined);
+  const [topicState, setTopicState] = useState<StudyTopicsState | null | undefined>(undefined);
   const [reinforcement, setReinforcement] = useState<{
     completedSessions: number;
     areas: { title: string; misses: number; total: number; reasonCode: "incorrectAnswer" }[];
@@ -36,24 +42,32 @@ function Plan() {
 
   useEffect(() => {
     let cancelled = false;
-    setAnalysis(undefined);
+    setTopicState(undefined);
     setReinforcement(null);
 
     if (!documentId) {
-      setAnalysis(null);
+      setTopicState(null);
       setReinforcement({ completedSessions: 0, areas: [] });
       return;
     }
 
-    const stored = storageService.getAnalysis();
-    if (stored?.documentId === documentId) setAnalysis(stored);
-
-    getStudyAnalysisForDocument(documentId)
-      .then((rebuilt) => {
-        if (!cancelled) setAnalysis(rebuilt);
+    getDocumentTopics({ data: { documentId } })
+      .then((result) => {
+        if (!cancelled) {
+          setTopicState(
+            resolveStudyTopicsState({
+              documentId,
+              documentTitle: result.document.title,
+              topics: result.topics,
+              sourceState: result.sourceState,
+            }),
+          );
+        }
       })
-      .catch(() => {
-        if (!cancelled) setAnalysis(null);
+      .catch((error) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : "";
+        setTopicState(message.includes(STALE_TOPIC_SOURCE) ? resolveStaleStudyTopicsState(documentId) : null);
       });
 
     getDocumentReinforcementAreas({ data: { documentId } })
@@ -69,8 +83,8 @@ function Plan() {
     };
   }, [documentId]);
 
-  if (analysis === undefined) return null;
-  if (!analysis) {
+  if (topicState === undefined) return null;
+  if (!topicState) {
     return (
       <EmptyState
         title={t("plan.noPlanTitle")}
@@ -80,19 +94,23 @@ function Plan() {
       />
     );
   }
+  if (topicState.status === "unavailable") {
+    return <UnavailableTopicsState documentId={topicState.documentId} reason={topicState.reason} />;
+  }
 
   const areas = reinforcement?.areas ?? [];
   const hasCompletedSessions = (reinforcement?.completedSessions ?? 0) > 0;
-  const session = buildSessionStructure(analysis.concepts, areas, t);
+  const session = buildTopicSessionStructure(topicState.topics, areas, t);
+  const mapTopics = getKnowledgeMapTopics(topicState.topics);
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">
       <header>
         <AppLabel>{t("plan.title")}</AppLabel>
-        <h1 className="display-sm mt-4">{analysis.subject}</h1>
-        <p className="mt-3 text-base text-muted-foreground">{analysis.chapter}</p>
+        <h1 className="display-sm mt-4">{topicState.documentTitle}</h1>
+        <p className="mt-3 text-base text-muted-foreground">{t("topics.saved")}</p>
         <ul className="mt-6 flex flex-wrap gap-x-8 gap-y-2 font-mono text-xs text-muted-foreground">
-          <li>{t("plan.conceptsIdentified", { count: analysis.concepts.length })}</li>
+          <li>{t("plan.conceptsIdentified", { count: topicState.topics.length })}</li>
           <li>{t("plan.areasNeed", { count: areas.length })}</li>
           <li className="text-lime">{t("plan.guidedReady")}</li>
         </ul>
@@ -103,7 +121,7 @@ function Plan() {
         <p className="mt-3 text-sm text-muted-foreground">{t("plan.knowledgeMapDescription")}</p>
         <div className="mt-6 overflow-x-auto">
           <div className="min-w-[560px]">
-            <KnowledgeMap concepts={analysis.concepts} />
+            <KnowledgeMap concepts={mapTopics} />
           </div>
         </div>
       </AppCard>
@@ -171,7 +189,7 @@ function Plan() {
               </ul>
               <Link
                 to="/app/session"
-                search={{ documentId: analysis.documentId }}
+                search={{ documentId: topicState.documentId }}
                 className="mt-8 inline-flex items-center justify-center gap-2 rounded-full border border-border px-6 py-3 text-sm text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-lime/40 hover:bg-surface-2"
               >
                 {t("plan.focusWeak")} <span aria-hidden>→</span>
@@ -186,19 +204,13 @@ function Plan() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {analysis.documentId ? (
-          <Link
-            to="/app/session"
-            search={{ documentId: analysis.documentId }}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-lime px-6 py-3 text-sm font-medium text-background transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-lime)]"
-          >
-            {t("plan.startSession")} <span aria-hidden>→</span>
-          </Link>
-        ) : (
-          <LinkButton to="/app/session">
-            {t("plan.startSession")} <span aria-hidden>→</span>
-          </LinkButton>
-        )}
+        <Link
+          to="/app/session"
+          search={{ documentId: topicState.documentId }}
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-lime px-6 py-3 text-sm font-medium text-background transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-lime)]"
+        >
+          {t("plan.startSession")} <span aria-hidden>→</span>
+        </Link>
         <LinkButton to="/app/materials" variant="ghost">
           {t("common.reviewMaterial")}
         </LinkButton>
@@ -207,47 +219,46 @@ function Plan() {
   );
 }
 
-function buildSessionStructure(
-  concepts: Concept[],
-  areas: { title: string }[],
-  t: (key: string, vars?: Record<string, string | number>) => string,
-): RecommendedSession {
-  const warmupConcepts = concepts.slice(0, 2).map((concept) => concept.title).join(", ");
-  const reviewConcepts = concepts.slice(-2).map((concept) => concept.title).join(", ");
-  const practiceDetail =
-    areas.length > 0
-      ? `${t("plan.practiceDetail")}; ${areas.map((area) => area.title).join(", ")}`
-      : t("plan.practiceDetail");
+function UnavailableTopicsState({
+  documentId,
+  reason,
+}: {
+  documentId: string;
+  reason: TopicUnavailableReason;
+}) {
+  const { t } = useI18n();
+  const title =
+    reason === "stale"
+      ? t("topics.stale")
+      : reason === "unavailable"
+        ? t("topics.noText")
+        : reason === "too_large"
+          ? t("topics.tooLarge")
+          : reason === "insufficient"
+            ? t("topics.insufficient")
+            : t("topics.notAnalyzed");
+  const body =
+    reason === "unavailable"
+      ? t("topics.noTextBody")
+      : reason === "too_large"
+        ? t("topics.tooLargeBody")
+        : reason === "insufficient"
+          ? t("topics.insufficientBody")
+          : t("topics.aiCost");
 
-  return {
-    minutes: 0,
-    blocks: [
-      {
-        index: "01",
-        title: t("plan.blocks.warmup"),
-        detail: warmupConcepts || t("plan.currentConcepts"),
-        minutes: 0,
-      },
-      {
-        index: "02",
-        title: t("plan.blocks.core"),
-        detail: `${concepts.length} ${t("plan.blocks.core").toLowerCase()}`,
-        minutes: 0,
-      },
-      {
-        index: "03",
-        title: t("plan.blocks.practice"),
-        detail: practiceDetail,
-        minutes: 0,
-      },
-      {
-        index: "04",
-        title: t("plan.blocks.review"),
-        detail: reviewConcepts
-          ? `${t("plan.reviewDetail")}: ${reviewConcepts}`
-          : t("plan.reviewDetail"),
-        minutes: 0,
-      },
-    ],
-  };
+  return (
+    <div className="mx-auto max-w-[720px]">
+      <AppCard className="flex flex-col items-center gap-4 border-dashed py-14 text-center">
+        <AppLabel>{title}</AppLabel>
+        <p className="max-w-sm text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{body}</p>
+        <Link
+          to="/app/materials/$documentId/topics"
+          params={{ documentId }}
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-lime px-6 py-3 text-sm font-medium text-background transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-lime)]"
+        >
+          {t("topics.analyze")} <span aria-hidden>→</span>
+        </Link>
+      </AppCard>
+    </div>
+  );
 }

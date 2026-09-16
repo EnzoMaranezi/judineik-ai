@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { Concept } from "@/types/study";
 import { useI18n } from "@/lib/i18n";
 
 interface Node {
@@ -18,8 +17,13 @@ const POSITIONS = [
   [480, 265],
 ] as const;
 
-/** Neutral visual overview of concepts extracted from the current material. */
-export function KnowledgeMap({ concepts }: { concepts?: Concept[] }) {
+type KnowledgeMapTopic = {
+  id: string;
+  title: string;
+};
+
+/** Neutral visual overview of visible study topics. */
+export function KnowledgeMap({ concepts }: { concepts?: KnowledgeMapTopic[] }) {
   const [active, setActive] = useState<string | null>(null);
   const { t } = useI18n();
 
