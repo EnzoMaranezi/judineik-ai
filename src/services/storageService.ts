@@ -1,7 +1,6 @@
 import type {
   MaterialRecord,
   SessionProgress,
-  SessionResult,
   StudyAnalysis,
 } from "@/types/study";
 
@@ -16,7 +15,6 @@ const KEYS = {
   analysis: `${PREFIX}analysis`,
   materials: `${PREFIX}materials`,
   progress: `${PREFIX}session-progress`,
-  results: `${PREFIX}results`,
   pendingInput: `${PREFIX}pending-input`,
 } as const;
 
@@ -59,20 +57,11 @@ export const storageService = {
   getAnalysis: () => read<StudyAnalysis | null>(KEYS.analysis, null),
   setAnalysis: (analysis: StudyAnalysis) => write(KEYS.analysis, analysis),
 
-  getMaterials: () => read<MaterialRecord[]>(KEYS.materials, []),
   addMaterial: (material: MaterialRecord) => {
     const list = read<MaterialRecord[]>(KEYS.materials, []);
     write(KEYS.materials, [material, ...list.filter((m) => m.id !== material.id)]);
   },
 
-  getProgress: () => read<SessionProgress | null>(KEYS.progress, null),
   setProgress: (progress: SessionProgress) => write(KEYS.progress, progress),
   clearProgress: () => write(KEYS.progress, null),
-
-  getResults: () => read<SessionResult[]>(KEYS.results, []),
-  addResult: (result: SessionResult) => {
-    const list = read<SessionResult[]>(KEYS.results, []);
-    write(KEYS.results, [result, ...list].slice(0, 20));
-  },
-  getLastResult: () => read<SessionResult[]>(KEYS.results, [])[0] ?? null,
 };
