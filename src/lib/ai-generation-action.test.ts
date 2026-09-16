@@ -9,7 +9,6 @@ import {
 
 const attempts: AiProviderAttempt[] = [
   { provider: "nvidia", model: "primary", label: "nvidia-primary" },
-  { provider: "nvidia", model: "fallback", label: "nvidia-fallback" },
   { provider: "openrouter", model: "configured", label: "openrouter-fallback" },
 ];
 
@@ -84,7 +83,7 @@ test("uses one reservation when an EOL provider falls back successfully", async 
 
   assert.equal(result, "generated text");
   assert.equal(reservations, 1);
-  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+  assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
   assert.deepEqual(finished, ["succeeded"]);
 });
 

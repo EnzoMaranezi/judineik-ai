@@ -16,7 +16,6 @@ test("configures the complete provider chain in the intended order", () => {
     config.attempts.map(({ provider, model, label }) => ({ provider, model, label })),
     [
       { provider: "nvidia", model: "openai/gpt-oss-20b", label: "nvidia-primary" },
-      { provider: "nvidia", model: "openai/gpt-oss-120b", label: "nvidia-fallback" },
       {
         provider: "openrouter",
         model: "configured-openrouter-model",
@@ -26,12 +25,12 @@ test("configures the complete provider chain in the intended order", () => {
   );
 });
 
-test("configures NVIDIA without OpenRouter", () => {
+test("configures only the functional NVIDIA primary without OpenRouter", () => {
   const config = resolveAiProviderConfiguration({ NVIDIA_API_KEY: "nvidia-key" });
 
   assert.deepEqual(
     config.attempts.map(({ label }) => label),
-    ["nvidia-primary", "nvidia-fallback"],
+    ["nvidia-primary"],
   );
 });
 
@@ -76,7 +75,7 @@ test("reads a fresh environment snapshot for each request", () => {
   assert.equal(resolveAiProviderConfiguration(env).attempts.length, 0);
 
   env["NVIDIA_API_KEY"] = "nvidia-key";
-  assert.equal(resolveAiProviderConfiguration(env).attempts.length, 2);
+  assert.equal(resolveAiProviderConfiguration(env).attempts.length, 1);
 
   delete env["NVIDIA_API_KEY"];
   env["OPENROUTER_API_KEY"] = "openrouter-key";

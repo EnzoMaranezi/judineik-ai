@@ -11,7 +11,6 @@ import {
 
 const attempts: AiProviderAttempt[] = [
   { provider: "nvidia", model: "openai/gpt-oss-20b", label: "nvidia-primary" },
-  { provider: "nvidia", model: "openai/gpt-oss-120b", label: "nvidia-fallback" },
   { provider: "openrouter", model: "configured-model", label: "openrouter-fallback" },
 ];
 
@@ -34,37 +33,37 @@ test("uses NVIDIA primary without fallback", async () => {
   assert.deepEqual(called, ["nvidia-primary"]);
 });
 
-test("uses NVIDIA fallback after a transient primary failure", async () => {
+test("uses OpenRouter after a transient NVIDIA failure", async () => {
   const called: string[] = [];
   const result = await runAiProviderChain({
     attempts,
     generate: async (attempt) => {
       called.push(attempt.label);
-      if (attempt.label === "nvidia-primary") throw providerError(503);
-      return "nvidia fallback output";
+      if (attempt.provider === "nvidia") throw providerError(503);
+      return "openrouter fallback output";
     },
   });
 
-  assert.equal(result, "nvidia fallback output");
-  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+  assert.equal(result, "openrouter fallback output");
+  assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
 });
 
-test("uses NVIDIA fallback when the primary model is not found", async () => {
+test("uses OpenRouter when the NVIDIA model is not found", async () => {
   const called: string[] = [];
   const result = await runAiProviderChain({
     attempts,
     generate: async (attempt) => {
       called.push(attempt.label);
-      if (attempt.label === "nvidia-primary") throw providerError(404, "Not Found");
-      return "nvidia fallback output";
+      if (attempt.provider === "nvidia") throw providerError(404, "Not Found");
+      return "openrouter fallback output";
     },
   });
 
-  assert.equal(result, "nvidia fallback output");
-  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+  assert.equal(result, "openrouter fallback output");
+  assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
 });
 
-test("uses NVIDIA fallback when the primary model has reached end of life", async () => {
+test("uses OpenRouter when the NVIDIA model has reached end of life", async () => {
   const called: string[] = [];
   const result = await runAiProviderChain({
     attempts,
@@ -73,27 +72,27 @@ test("uses NVIDIA fallback when the primary model has reached end of life", asyn
       if (attempt.label === "nvidia-primary") {
         throw providerError(410, "Model reached end of life and is no longer available");
       }
-      return "nvidia fallback output";
+      return "openrouter fallback output";
     },
   });
 
-  assert.equal(result, "nvidia fallback output");
-  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+  assert.equal(result, "openrouter fallback output");
+  assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
 });
 
-test("uses OpenRouter after both NVIDIA models are transiently unavailable", async () => {
+test("uses OpenRouter after NVIDIA is rate limited", async () => {
   const called: string[] = [];
   const result = await runAiProviderChain({
     attempts,
     generate: async (attempt) => {
       called.push(attempt.label);
-      if (attempt.provider === "nvidia") throw providerError(503);
+      if (attempt.provider === "nvidia") throw providerError(429, "rate limited");
       return "openrouter output";
     },
   });
 
   assert.equal(result, "openrouter output");
-  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback", "openrouter-fallback"]);
+  assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
 });
 
 test("reports provider-chain exhaustion after all configured providers fail", async () => {
@@ -127,16 +126,16 @@ test("falls back after provider-specific authentication, credit, and access fail
   for (const statusCode of [401, 402, 403]) {
     const called: string[] = [];
     const result = await runAiProviderChain({
-      attempts: attempts.slice(0, 2),
+      attempts,
       generate: async (attempt) => {
         called.push(attempt.label);
-        if (attempt.label === "nvidia-primary") throw providerError(statusCode);
+        if (attempt.provider === "nvidia") throw providerError(statusCode);
         return "fallback output";
       },
     });
 
     assert.equal(result, "fallback output");
-    assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+    assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
   }
 });
 
@@ -210,7 +209,7 @@ test("aborts a provider that never responds and falls back", async () => {
     ],
     generate: async (attempt, context) => {
       called.push(attempt.label);
-      if (attempt.label === "nvidia-primary") {
+      if (attempt.provider === "nvidia") {
         return new Promise<string>((_resolve, reject) => {
           context.abortSignal.addEventListener(
             "abort",
@@ -229,10 +228,10 @@ test("aborts a provider that never responds and falls back", async () => {
 
   assert.equal(result, "fallback success");
   assert.equal(primaryAborted, true);
-  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+  assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
 });
 
-test("falls through both timed-out NVIDIA models to OpenRouter", async () => {
+test("falls through a timed-out NVIDIA request to OpenRouter", async () => {
   const called: string[] = [];
   const result = await runAiProviderChain({
     attempts: attempts.map((attempt) => ({ ...attempt, timeoutMs: 10 })),
@@ -245,7 +244,7 @@ test("falls through both timed-out NVIDIA models to OpenRouter", async () => {
   });
 
   assert.equal(result, "openrouter success");
-  assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback", "openrouter-fallback"]);
+  assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
 });
 
 test("stops at the global provider budget", async () => {

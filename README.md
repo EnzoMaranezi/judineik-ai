@@ -77,8 +77,7 @@ O NEXA descobre tópicos a partir do conteúdo persistido do material e mantém 
 ### IA
 
 - NVIDIA NIM `openai/gpt-oss-20b` como provedor principal.
-- NVIDIA NIM `openai/gpt-oss-120b` como fallback secundário.
-- Um modelo OpenRouter configurado como fallback final.
+- OpenRouter `openai/gpt-oss-20b` como fallback de baixo custo, configurado por `OPENROUTER_MODEL`.
 - O gateway centralizado executa a seleção e o fallback apenas no servidor; o navegador não chama provedores diretamente.
 - Chaves dos provedores permanecem somente no servidor.
 - Uma única reserva de quota por ação do usuário, mesmo quando há tentativa de fallback.
@@ -131,6 +130,9 @@ No Windows PowerShell:
 ```powershell
 Copy-Item .env.example .env
 ```
+
+Configure `OPENROUTER_MODEL=openai/gpt-oss-20b`. O sufixo `:free` não é usado pelo gateway de
+produção porque esse endpoint não oferece disponibilidade suficiente para servir como fallback.
 
 Execute as migrações em ordem:
 

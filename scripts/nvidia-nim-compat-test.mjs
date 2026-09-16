@@ -436,7 +436,6 @@ function selectModel(models) {
   const ids = models.map(modelId).filter(Boolean);
   const preferences = [
     /^openai\/gpt-oss-20b$/i,
-    /^openai\/gpt-oss-120b$/i,
     /^nvidia\/llama-3\.3-nemotron-super-49b/i,
     /^nvidia\/llama-3\.1-nemotron-70b-instruct/i,
     /^meta\/llama-3\.1-70b-instruct/i,

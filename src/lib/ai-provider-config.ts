@@ -1,10 +1,8 @@
 import type { AiProviderAttempt } from "./ai-provider-chain.ts";
 
 export const NVIDIA_PRIMARY_MODEL = "openai/gpt-oss-20b";
-export const NVIDIA_FALLBACK_MODEL = "openai/gpt-oss-120b";
-export const NVIDIA_PRIMARY_TIMEOUT_MS = 30_000;
-export const NVIDIA_FALLBACK_TIMEOUT_MS = 45_000;
-export const OPENROUTER_PROVIDER_TIMEOUT_MS = 40_000;
+export const NVIDIA_PRIMARY_TIMEOUT_MS = 45_000;
+export const OPENROUTER_PROVIDER_TIMEOUT_MS = 60_000;
 
 export type AiProviderEnvironment = {
   NVIDIA_API_KEY?: string;
@@ -33,20 +31,12 @@ export function resolveAiProviderConfiguration(
   const attempts: AiProviderAttempt[] = [];
 
   if (nvidiaApiKey) {
-    attempts.push(
-      {
-        provider: "nvidia",
-        model: NVIDIA_PRIMARY_MODEL,
-        label: "nvidia-primary",
-        timeoutMs: NVIDIA_PRIMARY_TIMEOUT_MS,
-      },
-      {
-        provider: "nvidia",
-        model: NVIDIA_FALLBACK_MODEL,
-        label: "nvidia-fallback",
-        timeoutMs: NVIDIA_FALLBACK_TIMEOUT_MS,
-      },
-    );
+    attempts.push({
+      provider: "nvidia",
+      model: NVIDIA_PRIMARY_MODEL,
+      label: "nvidia-primary",
+      timeoutMs: NVIDIA_PRIMARY_TIMEOUT_MS,
+    });
   }
 
   if (openRouterApiKey && openRouterModel) {

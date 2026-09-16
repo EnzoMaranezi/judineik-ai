@@ -113,6 +113,10 @@ AI_IP_HMAC_SECRET
 AI_QUOTA_RPC_SIGNING_SECRET
 ```
 
+Use `OPENROUTER_MODEL=openai/gpt-oss-20b` nos ambientes server-side de Preview e Production. O
+fallback continua configurável, mas o slug `openai/gpt-oss-20b:free` não deve ser usado para o
+gateway de produção.
+
 As chaves NVIDIA, OpenRouter e os segredos de quota são exclusivamente de servidor. Não use prefixo `VITE_` para elas.
 
 Antes de aplicar `0011_ai_ip_rate_limits.sql`, crie no Supabase Vault um segredo chamado
