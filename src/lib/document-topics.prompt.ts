@@ -22,3 +22,11 @@ ACADEMIC RELEVANCE:
 Before returning the result, verify that every topic answers this question:
 "Would a student reasonably study this topic to understand the subject taught by this material?"
 If not, merge its segments into the nearest relevant academic topic.`;
+
+export const TOPIC_DISCOVERY_OUTPUT_FORMAT = `Return JSON text only, with no Markdown fence or commentary, using exactly this shape:
+{"topics":[{"title":"Concise source-language title","description":"Concise grounded source-language description","segmentIds":["SEG:S001","SEG:S002"]}]}
+
+The keys "topics", "title", "description", and "segmentIds" are fixed parser keys. Values in "segmentIds" must be copied ONLY from the explicit ALLOWED_SEGMENT_TOKENS list. Assign every allowed SEG:S### token exactly once across 3-12 topics. Source-text numbering is content and must never be converted into a segment token.`;
+
+export const TOPIC_DISCOVERY_LANGUAGE_INSTRUCTION =
+  "Write topic titles and descriptions in the same language as the supplied source material. Preserve its technical terminology and do not translate it to the interface language.";
