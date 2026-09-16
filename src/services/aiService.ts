@@ -1,4 +1,4 @@
-import type { AnswerFeedback, Concept, Question, RecommendedSession, StudyAnalysis } from "@/types/study";
+import type { Concept, Question, StudyAnalysis } from "@/types/study";
 import type { PendingInput } from "@/services/storageService";
 
 /**
@@ -9,8 +9,6 @@ import type { PendingInput } from "@/services/storageService";
  * to change — components already consume the typed contract below.
  */
 export const USE_MOCK_AI = true;
-
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const STOP_WORDS = new Set([
   "about",
@@ -320,82 +318,5 @@ export async function analyzeMaterial(input: PendingInput): Promise<StudyAnalysi
         { index: "04", title: "Quick review", detail: concepts.slice(-2).map((concept) => concept.title).join(", "), minutes: 2 },
       ],
     },
-  };
-}
-
-export async function generateStudyPlan(analysis: StudyAnalysis): Promise<RecommendedSession> {
-  if (!USE_MOCK_AI) throw new Error("Real AI mode is not configured yet.");
-  await delay(200);
-  return analysis.recommendedSession;
-}
-
-export async function generateQuestions(analysis: StudyAnalysis): Promise<Question[]> {
-  if (!USE_MOCK_AI) throw new Error("Real AI mode is not configured yet.");
-  await delay(200);
-  return analysis.questions;
-}
-
-function normalize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
-}
-
-export async function evaluateAnswer(
-  question: Question,
-  answer: string,
-): Promise<AnswerFeedback> {
-  if (!USE_MOCK_AI) throw new Error("Real AI mode is not configured yet.");
-  await delay(900);
-
-  const trimmed = answer.trim();
-  if (!trimmed) {
-    return {
-      verdict: "incorrect",
-      headline: "No answer yet.",
-      body: "Recall is the part that builds memory — try putting it in your own words, even partially.",
-      missing: question.answer,
-      confidence: 0,
-    };
-  }
-
-  if (question.kind === "multiple-choice" || question.kind === "true-false") {
-    const correct = trimmed.toLowerCase() === question.answer.toLowerCase();
-    return {
-      verdict: correct ? "correct" : "incorrect",
-      headline: correct ? "Correct." : "Not quite.",
-      body: question.explanation,
-      missing: correct ? undefined : question.answer,
-      confidence: correct ? 92 : 38,
-    };
-  }
-
-  const expected = new Set(normalize(question.answer));
-  const given = normalize(trimmed);
-  const hits = given.filter((w) => w.length > 3 && expected.has(w)).length;
-  const ratio = Math.min(1, hits / 6);
-
-  if (ratio >= 0.6) {
-    return {
-      verdict: "correct",
-      headline: "Good reasoning.",
-      body: "You correctly identified the congestion signal and the reasoning behind the reaction.",
-      confidence: Math.round(78 + ratio * 15),
-      missing: question.explanation,
-    };
-  }
-  if (ratio >= 0.25) {
-    return {
-      verdict: "partial",
-      headline: "Good reasoning.",
-      body: "You're on the right track, but one important distinction is missing.",
-      missing: question.explanation,
-      confidence: Math.round(55 + ratio * 25),
-    };
-  }
-  return {
-    verdict: "incorrect",
-    headline: "Not quite.",
-    body: "Your answer is related, but the key mechanism is mixed up. Let's reinforce this concept.",
-    missing: question.answer,
-    confidence: 34,
   };
 }
