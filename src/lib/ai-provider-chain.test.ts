@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  AI_PROVIDER_CHAIN_BUDGET_MS,
   AI_PROVIDERS_UNAVAILABLE,
   AI_PROVIDER_ATTEMPT_TIMEOUT,
+  classifyProviderError,
   runAiProviderChain,
   type AiProviderAttempt,
 } from "./ai-provider-chain.ts";
@@ -121,6 +123,54 @@ test("does not fallback after a non-retryable provider error", async () => {
   assert.deepEqual(called, ["nvidia-primary"]);
 });
 
+test("falls back after provider-specific authentication, credit, and access failures", async () => {
+  for (const statusCode of [401, 402, 403]) {
+    const called: string[] = [];
+    const result = await runAiProviderChain({
+      attempts: attempts.slice(0, 2),
+      generate: async (attempt) => {
+        called.push(attempt.label);
+        if (attempt.label === "nvidia-primary") throw providerError(statusCode);
+        return "fallback output";
+      },
+    });
+
+    assert.equal(result, "fallback output");
+    assert.deepEqual(called, ["nvidia-primary", "nvidia-fallback"]);
+  }
+});
+
+test("classifies provider failures with safe diagnostics only", () => {
+  const classified = classifyProviderError(
+    Object.assign(new Error("sensitive provider text"), {
+      name: "AI_APICallError",
+      statusCode: 429,
+      isRetryable: true,
+      responseBody: "private document content",
+      responseHeaders: {
+        "retry-after": "2",
+        "x-request-id": "request_123",
+        authorization: "Bearer secret",
+      },
+      data: { error: { code: "rate_limit_exceeded", message: "private content" } },
+    }),
+  );
+
+  assert.deepEqual(classified, {
+    category: "rate_limited",
+    eligibleForFallback: true,
+    statusCode: 429,
+    errorName: "AI_APICallError",
+    providerCode: "rate_limit_exceeded",
+    requestId: "request_123",
+    retryAfterMs: 2_000,
+    retryable: true,
+  });
+  assert.equal("responseBody" in classified, false);
+  assert.equal("message" in classified, false);
+  assert.equal(AI_PROVIDER_CHAIN_BUDGET_MS, 120_000);
+});
+
 test("does not invoke fallback after a provider has returned text that later fails parsing", async () => {
   const called: string[] = [];
   const text = await runAiProviderChain({
@@ -227,9 +277,12 @@ test("logs provider start before a hung request and its bounded timeout", async 
     new Error(AI_PROVIDERS_UNAVAILABLE),
   );
 
-  assert.deepEqual(events.map(({ outcome, category }) => ({ outcome, category })), [
-    { outcome: "started", category: "started" },
-    { outcome: "failure", category: "transient" },
-  ]);
+  assert.deepEqual(
+    events.map(({ outcome, category }) => ({ outcome, category })),
+    [
+      { outcome: "started", category: "started" },
+      { outcome: "failure", category: "timeout" },
+    ],
+  );
   assert.equal(AI_PROVIDER_ATTEMPT_TIMEOUT.includes("TIMEOUT"), true);
 });

@@ -12,8 +12,9 @@ const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
 const NVIDIA_PRIMARY_MODEL = "openai/gpt-oss-20b";
 const NVIDIA_FALLBACK_MODEL = "openai/gpt-oss-120b";
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
-const NVIDIA_PROVIDER_TIMEOUT_MS = 60_000;
-const OPENROUTER_PROVIDER_TIMEOUT_MS = 45_000;
+const NVIDIA_PRIMARY_TIMEOUT_MS = 30_000;
+const NVIDIA_FALLBACK_TIMEOUT_MS = 45_000;
+const OPENROUTER_PROVIDER_TIMEOUT_MS = 40_000;
 const AI_SDK_MAX_RETRIES = 0;
 
 type AiGenerationRequest = {
@@ -55,13 +56,13 @@ function availableProviderAttempts(): AiProviderAttempt[] {
         provider: "nvidia",
         model: NVIDIA_PRIMARY_MODEL,
         label: "nvidia-primary",
-        timeoutMs: NVIDIA_PROVIDER_TIMEOUT_MS,
+        timeoutMs: NVIDIA_PRIMARY_TIMEOUT_MS,
       },
       {
         provider: "nvidia",
         model: NVIDIA_FALLBACK_MODEL,
         label: "nvidia-fallback",
-        timeoutMs: NVIDIA_PROVIDER_TIMEOUT_MS,
+        timeoutMs: NVIDIA_FALLBACK_TIMEOUT_MS,
       },
     );
   }
@@ -79,14 +80,9 @@ function availableProviderAttempts(): AiProviderAttempt[] {
   return attempts;
 }
 
-function logProviderAttempt(event: {
-  attempt: number;
-  provider: string;
-  model: string;
-  latencyMs: number;
-  outcome: string;
-  category: string;
-}) {
+function logProviderAttempt(
+  event: Parameters<NonNullable<Parameters<typeof runAiProviderChain>[0]["onAttempt"]>>[0],
+) {
   console.info(
     "[ai-gateway]",
     JSON.stringify({
@@ -94,8 +90,15 @@ function logProviderAttempt(event: {
       model: event.model,
       attempt: event.attempt,
       latencyMs: event.latencyMs,
+      timeoutMs: event.timeoutMs,
       outcome: event.outcome,
       category: event.category,
+      ...(event.statusCode === undefined ? {} : { statusCode: event.statusCode }),
+      ...(event.errorName === undefined ? {} : { errorName: event.errorName }),
+      ...(event.providerCode === undefined ? {} : { providerCode: event.providerCode }),
+      ...(event.requestId === undefined ? {} : { requestId: event.requestId }),
+      ...(event.retryAfterMs === undefined ? {} : { retryAfterMs: event.retryAfterMs }),
+      ...(event.retryable === undefined ? {} : { retryable: event.retryable }),
     }),
   );
 }
