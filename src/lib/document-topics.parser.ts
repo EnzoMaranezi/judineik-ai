@@ -16,7 +16,22 @@ export type DiscoveredDocumentTopic = {
 const rawTopicSchema = z.object({
   title: z.string().trim().min(3).max(160),
   description: z.string().trim().min(20).max(600),
-  segmentIds: z.array(z.string().trim().regex(/^SEG:S\d{3}$/u)).min(1),
+  segmentIds: z
+    .array(
+      z
+        .string()
+        .trim()
+        .regex(/^SEG:S\d{3}$/u),
+    )
+    .min(1),
+  coreSegmentIds: z
+    .array(
+      z
+        .string()
+        .trim()
+        .regex(/^SEG:S\d{3}$/u),
+    )
+    .min(1),
 });
 
 const rawResponseSchema = z.object({
@@ -87,6 +102,13 @@ export function parseTopicDiscoveryResponse(
 
     const uniqueIds = new Set(topic.segmentIds);
     if (uniqueIds.size !== topic.segmentIds.length) throw new Error("DUPLICATE_TOPIC_SEGMENT");
+    const uniqueCoreIds = new Set(topic.coreSegmentIds);
+    if (uniqueCoreIds.size !== topic.coreSegmentIds.length) {
+      throw new Error("DUPLICATE_TOPIC_CORE_SEGMENT");
+    }
+    if (topic.coreSegmentIds.some((token) => !uniqueIds.has(token))) {
+      throw new Error("INVALID_TOPIC_CORE_SEGMENT");
+    }
     const topicSegments = topic.segmentIds.map((token) => {
       const id = token.slice("SEG:".length);
       const segment = segmentsById.get(id);

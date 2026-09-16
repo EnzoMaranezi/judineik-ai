@@ -32,31 +32,16 @@ import {
   parseTopicSummarySourceRanges,
   reconstructVerifiedTopicSource,
 } from "@/lib/topic-summary-source";
+import {
+  MARKDOWN_QUESTION_FORMAT,
+  PRACTICE_QUESTION_SYSTEM_PROMPT,
+  QUESTION_SYSTEM_PROMPT,
+} from "@/lib/questions.prompt";
+import { assertDistinctGeneratedQuestions } from "@/lib/questions.validation";
 
 const MAX_INPUT_CHARS = 60_000;
 const MIN_QUESTION_SOURCE_CHARS = 200;
 export const TOPIC_QUESTION_SOURCE_INSUFFICIENT = "TOPIC_QUESTION_SOURCE_INSUFFICIENT";
-
-const SYSTEM_PROMPT = `You are NEXA, an academic study agent.
-You write multiple-choice study questions based EXCLUSIVELY on the material provided by the user.
-Rules:
-- Never use outside/general knowledge. Never invent facts, numbers, names or examples.
-- Every question and every option must be answerable/verifiable from the material alone.
-- Follow the output language requirement for every user-facing field. Preserve source terminology when it is technically necessary.
-- Produce exactly 5 questions, each with exactly 4 options, exactly one correct option, and a concise explanation of why the correct option is correct.`;
-
-const MARKDOWN_QUESTION_FORMAT = `Return markdown using exactly this format:
-## Question 1
-Question: question text
-A. option text
-B. option text
-C. option text
-D. option text
-Correct: A
-Explanation: concise explanation
-
-Repeat for each question.
-The labels "Question:", "Correct:", and "Explanation:" are fixed parser tokens and must remain literal English. Only their values use the requested output language.`;
 
 function cleanMarkdown(value: string) {
   return value
@@ -367,7 +352,7 @@ export const generateDocumentQuestions = createServerFn({ method: "POST" })
           reserveAiGeneration(supabase, "questions", doc.id, localeContext.locale, userId, topicId),
         generate: () =>
           generateAiText({
-            system: SYSTEM_PROMPT,
+            system: QUESTION_SYSTEM_PROMPT,
             prompt: topic
               ? `Document title: ${doc.title}\nTopic title: ${topic.title}\n\nTOPIC-FOCUSED MODE:\nWrite questions ONLY about the selected topic excerpt. Do not use other document sections or outside context.\n\nTOPIC EXCERPT (the only allowed source):\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce exactly 5 multiple-choice questions.`
               : `Document title: ${doc.title}\n\nMATERIAL (the only allowed source):\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce exactly 5 multiple-choice questions.`,
@@ -376,7 +361,9 @@ export const generateDocumentQuestions = createServerFn({ method: "POST" })
           }),
         afterGenerate: async (result) => {
           const parsed = parseMarkdownQuestions(result.text);
-          const questions = questionSetSchema.parse(parsed).questions;
+          const questions = assertDistinctGeneratedQuestions(
+            questionSetSchema.parse(parsed).questions,
+          );
           const { data: setId, error: saveError } = await supabase.rpc(
             "create_question_set_version",
             {
@@ -694,18 +681,6 @@ export const getDocumentReinforcementAreas = createServerFn({ method: "POST" })
   });
 
 
-const PRACTICE_SYSTEM_PROMPT = `You are NEXA, an academic study agent.
-You write NEW multiple-choice practice questions that reinforce the concepts a student just got wrong.
-Rules:
-- Use EXCLUSIVELY the material provided. Never use outside knowledge or invent facts.
-- The MISSED QUESTIONS section only tells you WHICH content to reinforce. Never copy those questions,
-  never reword them slightly, and never reuse their option texts. Write genuinely different questions
-  (new scenario, new angle, new phrasing) that test the same underlying concept.
-- Every question must be answerable from the material alone.
-- Follow the output language requirement for every user-facing field. Preserve source terminology when it is technically necessary.
-- Each question has exactly 4 options, exactly one correct option, and a concise explanation.
-- Vary the position of the correct option across questions.`;
-
 /**
  * Generates a new question set focused on the concepts the user answered incorrectly.
  * The missed questions are read server-side from the stored set (RLS-scoped), never trusted
@@ -804,7 +779,7 @@ export const generatePracticeQuestions = createServerFn({ method: "POST" })
           reserveAiGeneration(supabase, "practice_questions", doc.id, practiceLocale, userId, topicId),
         generate: () =>
           generateAiText({
-            system: PRACTICE_SYSTEM_PROMPT,
+            system: PRACTICE_QUESTION_SYSTEM_PROMPT,
             prompt: topic
               ? `Document title: ${doc.title}\nTopic title: ${topic.title}\n\nTOPIC-FOCUSED MODE:\nWrite practice questions ONLY from the selected topic excerpt. Do not widen the scope to the rest of the document.\n\nTOPIC EXCERPT (the only allowed source):\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nMISSED QUESTIONS (content to reinforce, not to copy):\n${missedBlock}\n\nQUESTIONS ALREADY ASKED (must not be repeated or paraphrased):\n${bannedBlock}\n\nProduce exactly ${count} NEW multiple-choice question${count === 1 ? "" : "s"} covering the concepts behind the missed questions, grounded strictly in the topic excerpt.`
               : `Document title: ${doc.title}\n\nMATERIAL (the only allowed source):\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nMISSED QUESTIONS (content to reinforce, not to copy):\n${missedBlock}\n\nQUESTIONS ALREADY ASKED (must not be repeated or paraphrased):\n${bannedBlock}\n\nProduce exactly ${count} NEW multiple-choice question${count === 1 ? "" : "s"} covering the concepts behind the missed questions, grounded strictly in the material.`,
@@ -819,6 +794,7 @@ export const generatePracticeQuestions = createServerFn({ method: "POST" })
           const banned = new Set(previousQuestions.map((question) => normalize(question.question)));
           const filtered = questions.filter((question) => !banned.has(normalize(question.question)));
           if (filtered.length > 0) questions = filtered;
+          questions = assertDistinctGeneratedQuestions(questions);
 
           const { data: setId, error: saveError } = await supabase.rpc(
             "create_question_set_version",

@@ -2,6 +2,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
+import {
+  MARKDOWN_QUESTION_FORMAT,
+  PRACTICE_QUESTION_SYSTEM_PROMPT,
+  QUESTION_SYSTEM_PROMPT,
+} from "../src/lib/questions.prompt.ts";
+import { MARKDOWN_SUMMARY_FORMAT, SUMMARY_SYSTEM_PROMPT } from "../src/lib/summary.prompt.ts";
 
 const PROJECT_ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 
@@ -16,69 +22,6 @@ const requestTimeoutArgument = process.argv
 const REQUEST_TIMEOUT_MS = Number(
   requestTimeoutArgument?.split("=")[1] ?? process.env.NVIDIA_REQUEST_TIMEOUT_MS ?? 45_000,
 );
-
-const SYSTEM_SUMMARY_PROMPT = `You are NEXA, an academic study agent.
-You write structured study summaries based EXCLUSIVELY on the material provided by the user.
-Rules:
-- Never use outside/general knowledge. Never invent facts, numbers, names or examples.
-- Mirror the actual organisation and terminology of the material. Follow the output language requirement for user-facing content.
-- If the material is incomplete or too short to cover something, state that limitation in the "limitations" field instead of filling the gap.
-- Be concise: this is a revision aid, not a rewrite of the document.
-- The required Markdown headings are serialization tokens. Always use these exact English lines: "## Key concepts", "## Explanations", "## Definitions", "## Relationships", "## Final review", and "## Limitations".
-- CRITICAL SERIALIZATION OVERRIDE: treat those six heading lines as code literals, not prose. Copy them byte-for-byte and never translate, rename, pluralize, or alter them. Only their contents use the requested output language.`;
-
-const MARKDOWN_SUMMARY_FORMAT = `The following Markdown headings are a machine-readable serialization contract.
-Copy these six section-heading lines character-for-character: "## Key concepts", "## Explanations", "## Definitions", "## Relationships", "## Final review", and "## Limitations".
-They are fixed parser tokens, not user-facing text. Never translate, rename, pluralize, reorder, or omit them, regardless of the requested output language.
-For example, even in pt-BR, "## Conceitos-chave", "## Explicação", "## Definições", "## Relacionamentos", "## Revisão final", and "## Limitações" are invalid.
-Only the H1 title text and the content beneath the six fixed section headings should use the requested output language.
-Before returning, verify that all six canonical English heading lines are present exactly as written. Even for pt-BR, outputting "## Conceitos-chave" or any translated heading is invalid.
-
-Return markdown using exactly these sections:
-# localized title
-## Key concepts
-- concept
-## Explanations
-### heading
-body
-## Definitions
-- term: definition
-## Relationships
-- relationship
-## Final review
-short review paragraph
-## Limitations
-limitation or "None"`;
-
-const SYSTEM_QUESTION_PROMPT = `You are NEXA, an academic study agent.
-You write multiple-choice study questions based EXCLUSIVELY on the material provided by the user.
-Rules:
-- Never use outside/general knowledge. Never invent facts, numbers, names or examples.
-- Every question and every option must be answerable/verifiable from the material alone.
-- Follow the output language requirement for every user-facing field. Preserve source terminology when it is technically necessary.
-- Produce exactly 5 questions, each with exactly 4 options, exactly one correct option, and a concise explanation of why the correct option is correct.`;
-
-const MARKDOWN_QUESTION_FORMAT = `Return markdown using exactly this format:
-## Question 1
-Question: question text
-A. option text
-B. option text
-C. option text
-D. option text
-Correct: A
-Explanation: concise explanation
-
-Repeat for each question.
-The labels "Question:", "Correct:", and "Explanation:" are fixed parser tokens and must remain literal English. Only their values use the requested output language.`;
-
-const PRACTICE_SYSTEM_PROMPT = `You are NEXA, an academic study agent.
-You write NEW multiple-choice practice questions that reinforce concepts a student got wrong.
-Rules:
-- Use EXCLUSIVELY the material provided. Never use outside knowledge or invent facts.
-- Every question must be answerable from the material alone.
-- Follow the output language requirement for every user-facing field. Preserve source terminology when it is technically necessary.
-- Each question has exactly 4 options, exactly one correct option, and a concise explanation.
-- Do not reuse or paraphrase the missed questions.`;
 
 const PORTUGUESE_MATERIAL = `Sistemas operacionais organizam os recursos de hardware e oferecem abstrações para programas de usuário. Um processo representa um programa em execução, com espaço de endereçamento, registradores, arquivos abertos e estado de execução. Threads são fluxos de execução dentro de um mesmo processo e compartilham recursos como memória e descritores.
 
@@ -707,7 +650,7 @@ ${summaryMaterial.slice(0, MAX_INPUT_CHARS)}
 Produce the structured study summary.`;
 
 const summaryMessages = buildGenerationMessages({
-  system: SYSTEM_SUMMARY_PROMPT,
+  system: SUMMARY_SYSTEM_PROMPT,
   prompt: summaryTask,
   outputFormat: MARKDOWN_SUMMARY_FORMAT,
   languageInstruction: summaryLanguageInstruction,
@@ -738,7 +681,7 @@ printResult(summaryResult, {
 
 if (!summaryOnly) {
   const questionMessages = buildGenerationMessages({
-    system: SYSTEM_QUESTION_PROMPT,
+    system: QUESTION_SYSTEM_PROMPT,
     prompt: `Document title: Conceitos básicos de sistemas operacionais
 
 MATERIAL (the only allowed source):
@@ -767,7 +710,7 @@ Produce exactly 5 multiple-choice questions.`,
   });
 
   const practiceMessages = buildGenerationMessages({
-    system: PRACTICE_SYSTEM_PROMPT,
+    system: PRACTICE_QUESTION_SYSTEM_PROMPT,
     prompt: `Document title: Conceitos básicos de sistemas operacionais
 
 MATERIAL (the only allowed source):
@@ -802,7 +745,7 @@ Produce exactly 5 NEW multiple-choice questions covering the missed concepts.`,
   });
 
   const englishMessages = buildGenerationMessages({
-    system: SYSTEM_QUESTION_PROMPT,
+    system: QUESTION_SYSTEM_PROMPT,
     prompt: `Document title: Database transaction fundamentals
 
 MATERIAL (the only allowed source):

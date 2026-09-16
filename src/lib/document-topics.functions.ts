@@ -162,6 +162,7 @@ function normalizeTopicError(error: unknown) {
     message.includes("MALFORMED_TOPIC_OUTPUT") ||
     message.includes("INVALID_TOPIC_OUTPUT") ||
     message.includes("DUPLICATE_TOPIC") ||
+    message.includes("INVALID_TOPIC_CORE_SEGMENT") ||
     message.includes("UNKNOWN_TOPIC_SEGMENT") ||
     message.includes("OVERLAPPING_DOCUMENT_TOPICS") ||
     message.includes("INSUFFICIENT_TOPIC_COVERAGE") ||

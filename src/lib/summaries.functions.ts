@@ -23,42 +23,10 @@ import {
   parseTopicSummarySourceRanges,
   reconstructVerifiedTopicSource,
 } from "@/lib/topic-summary-source";
+import { MARKDOWN_SUMMARY_FORMAT, SUMMARY_SYSTEM_PROMPT } from "@/lib/summary.prompt";
 
 const MAX_INPUT_CHARS = 60_000;
 const TOPIC_SUMMARY_MAX_OUTPUT_TOKENS = 2_500;
-
-const SYSTEM_PROMPT = `You are NEXA, an academic study agent.
-You write structured study summaries based EXCLUSIVELY on the material provided by the user.
-Rules:
-- Never use outside/general knowledge. Never invent facts, numbers, names or examples.
-- Mirror the actual organisation and terminology of the material. Follow the output language requirement for user-facing content.
-- If the material is incomplete or too short to cover something, state that limitation in the "limitations" field instead of filling the gap.
-- Be concise: this is a revision aid, not a rewrite of the document.
-- The required Markdown headings are serialization tokens. Always use these exact English lines: "## Key concepts", "## Explanations", "## Definitions", "## Relationships", "## Final review", and "## Limitations".
-- CRITICAL SERIALIZATION OVERRIDE: treat those six heading lines as code literals, not prose. Copy them byte-for-byte and never translate, rename, pluralize, or alter them. Only their contents use the requested output language.`;
-
-const MARKDOWN_SUMMARY_FORMAT = `The following Markdown headings are a machine-readable serialization contract.
-Copy these six section-heading lines character-for-character: "## Key concepts", "## Explanations", "## Definitions", "## Relationships", "## Final review", and "## Limitations".
-They are fixed parser tokens, not user-facing text. Never translate, rename, pluralize, reorder, or omit them, regardless of the requested output language.
-For example, even in pt-BR, "## Conceitos-chave", "## Explicação", "## Definições", "## Relacionamentos", "## Revisão final", and "## Limitações" are invalid.
-Only the H1 title text and the content beneath the six fixed section headings should use the requested output language.
-Before returning, verify that all six canonical English heading lines are present exactly as written. Even for pt-BR, outputting "## Conceitos-chave" or any translated heading is invalid.
-
-Return markdown using exactly these sections:
-# localized title
-## Key concepts
-- concept
-## Explanations
-### heading
-body
-## Definitions
-- term: definition
-## Relationships
-- relationship
-## Final review
-short review paragraph
-## Limitations
-limitation or "None"`;
 
 function cleanMarkdown(value: string) {
   return value
@@ -389,7 +357,7 @@ export const generateDocumentSummary = createServerFn({ method: "POST" })
           ),
         generate: () =>
           generateAiText({
-            system: SYSTEM_PROMPT,
+            system: SUMMARY_SYSTEM_PROMPT,
             prompt: topic
               ? `Document title: ${documentRow.title}\nTopic title: ${topic.title}\n\nTOPIC-FOCUSED MODE:\nSummarize ONLY the topic excerpt below. Do not expand into other sections of the document or add related background that is absent from this excerpt.\n\nTOPIC EXCERPT (the only allowed source):\n"""\n${summaryText.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce the structured study summary for this topic.`
               : `Document title: ${documentRow.title}\n\nMATERIAL (the only allowed source):\n"""\n${summaryText.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce the structured study summary.`,
