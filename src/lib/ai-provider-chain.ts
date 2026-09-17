@@ -143,7 +143,14 @@ export function classifyProviderError(error: unknown): ProviderFailureClassifica
   let category: ProviderFailureCategory;
   let eligibleForFallback: boolean;
 
-  if (message === AI_PROVIDER_ATTEMPT_TIMEOUT || statusCode === 408) {
+  if (
+    message === AI_PROVIDER_ATTEMPT_TIMEOUT ||
+    statusCode === 408 ||
+    (statusCode === undefined &&
+      /^(?:(?:request|operation|connection|provider)\s+)?(?:timeout|timed\s+out)(?:\s+after\s+\d+(?:\.\d+)?\s*(?:ms|milliseconds?|s|seconds?))?[.!]?$/.test(
+        normalized.trim(),
+      ))
+  ) {
     category = "timeout";
     eligibleForFallback = true;
   } else if (statusCode === 429) {

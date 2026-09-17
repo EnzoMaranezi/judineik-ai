@@ -19,6 +19,60 @@ function providerError(statusCode: number, message = "provider unavailable") {
   return error;
 }
 
+test("classifies ordinary timeout messages and HTTP 408 as eligible timeouts", () => {
+  const errors = [
+    new Error("Request timed out"),
+    new Error("Request timeout"),
+    new Error("  REQUEST TIMED OUT.  "),
+    new Error("Operation timed out after 30 seconds"),
+    new Error("Connection timeout after 1000ms"),
+    new Error("Timeout"),
+    providerError(408, "HTTP failure"),
+    Object.assign(new Error("HTTP failure"), { status: 408 }),
+  ];
+
+  for (const error of errors) {
+    const classified = classifyProviderError(error);
+    assert.equal(classified.category, "timeout", error.message);
+    assert.equal(classified.eligibleForFallback, true, error.message);
+  }
+});
+
+test("unrecognized errors and mentions of timing configuration remain unknown", () => {
+  for (const message of [
+    "Unexpected provider failure",
+    "Invalid timeout configuration",
+    "Request timeout must be configured",
+    "Response took longer than expected",
+  ]) {
+    const classified = classifyProviderError(new Error(message));
+    assert.equal(classified.category, "unknown", message);
+    assert.equal(classified.eligibleForFallback, false, message);
+  }
+});
+
+test("ordinary primary timeout messages trigger the configured secondary provider", async () => {
+  for (const message of ["Request timed out", "Request timeout"]) {
+    const called: string[] = [];
+    const categories: string[] = [];
+    const result = await runAiProviderChain({
+      attempts,
+      generate: async (attempt) => {
+        called.push(attempt.label);
+        if (attempt.provider === "nvidia") throw new Error(message);
+        return "secondary output";
+      },
+      onAttempt: (event) => {
+        if (event.outcome === "failure") categories.push(event.category);
+      },
+    });
+
+    assert.equal(result, "secondary output");
+    assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
+    assert.deepEqual(categories, ["timeout"]);
+  }
+});
+
 test("uses NVIDIA primary without fallback", async () => {
   const called: string[] = [];
   const result = await runAiProviderChain({
@@ -201,6 +255,7 @@ test("a slow provider can still succeed within its explicit deadline", async () 
 
 test("aborts a provider that never responds and falls back", async () => {
   let primaryAborted = false;
+  let timeoutError: unknown;
   const called: string[] = [];
   const result = await runAiProviderChain({
     attempts: [
@@ -215,6 +270,7 @@ test("aborts a provider that never responds and falls back", async () => {
             "abort",
             () => {
               primaryAborted = true;
+              timeoutError = context.abortSignal.reason;
               reject(context.abortSignal.reason);
             },
             { once: true },
@@ -228,6 +284,11 @@ test("aborts a provider that never responds and falls back", async () => {
 
   assert.equal(result, "fallback success");
   assert.equal(primaryAborted, true);
+  assert.ok(timeoutError instanceof Error);
+  assert.equal(timeoutError.name, "AiProviderAttemptTimeoutError");
+  assert.equal(timeoutError.message, AI_PROVIDER_ATTEMPT_TIMEOUT);
+  assert.equal(classifyProviderError(timeoutError).category, "timeout");
+  assert.equal(classifyProviderError(timeoutError).eligibleForFallback, true);
   assert.deepEqual(called, ["nvidia-primary", "openrouter-fallback"]);
 });
 
