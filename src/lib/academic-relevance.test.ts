@@ -49,7 +49,18 @@ test("topic discovery separates exact coverage from instructional topic evidence
 });
 
 test("question contracts reject documentary recall while preserving contextual relevance", () => {
-  for (const prompt of [QUESTION_SYSTEM_PROMPT, PRACTICE_QUESTION_SYSTEM_PROMPT]) {
+  assert.match(QUESTION_SYSTEM_PROMPT, /Test meaningful academic understanding/u);
+  assert.match(
+    QUESTION_SYSTEM_PROMPT,
+    /filenames, citations, publishers, URLs, or other metadata/u,
+  );
+  assert.match(
+    QUESTION_SYSTEM_PROMPT,
+    /unless the source teaches them as subject matter/u,
+  );
+  assert.match(QUESTION_SYSTEM_PROMPT, /preserve necessary technical terminology/u);
+
+  for (const prompt of [PRACTICE_QUESTION_SYSTEM_PROMPT]) {
     assert.match(prompt, /must test meaningful academic understanding/u);
     assert.match(
       prompt,

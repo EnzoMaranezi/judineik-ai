@@ -42,6 +42,7 @@ import { assertDistinctGeneratedQuestions } from "@/lib/questions.validation";
 
 const MAX_INPUT_CHARS = 60_000;
 const MIN_QUESTION_SOURCE_CHARS = 200;
+const QUESTION_GENERATION_MAX_OUTPUT_TOKENS = 2_000;
 export const TOPIC_QUESTION_SOURCE_INSUFFICIENT = "TOPIC_QUESTION_SOURCE_INSUFFICIENT";
 
 async function assertQuestionSetBelongsToDocument(
@@ -257,10 +258,14 @@ export const generateDocumentQuestions = createServerFn({ method: "POST" })
           generateAiText({
             system: QUESTION_SYSTEM_PROMPT,
             prompt: topic
-              ? `Document title: ${doc.title}\nTopic title: ${topic.title}\n\nTOPIC-FOCUSED MODE:\nWrite questions ONLY about the selected topic excerpt. Do not use other document sections or outside context.\n\nTOPIC EXCERPT (the only allowed source):\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce exactly 5 multiple-choice questions.`
-              : `Document title: ${doc.title}\n\nMATERIAL (the only allowed source):\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce exactly 5 multiple-choice questions.`,
+              ? `Document title: ${doc.title}\nTopic title: ${topic.title}\n\nTOPIC-FOCUSED MODE:\nWrite questions ONLY about the selected topic excerpt. Do not use other document sections or outside context.\n\nTOPIC EXCERPT (the only allowed source):\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nCreate exactly 5 distinct multiple-choice questions. Each question must have 4 options, exactly one correct answer, and a concise source-grounded explanation.`
+              : `Document title: ${doc.title}\n\nMATERIAL:\n"""\n${questionSource.slice(0, MAX_INPUT_CHARS)}\n"""\n\nCreate exactly 5 distinct multiple-choice questions. Each question must have 4 options, exactly one correct answer, and a concise source-grounded explanation.`,
             outputFormat: MARKDOWN_QUESTION_FORMAT,
             languageInstruction: localeContext.languageInstruction,
+            languageInstructionPlacement: "prompt-only",
+            languageInstructionFormat: "instruction-only",
+            maxOutputTokens: QUESTION_GENERATION_MAX_OUTPUT_TOKENS,
+            reasoningEffort: "low" as const,
           }),
         afterGenerate: async (result) => {
           const parsed = parseMarkdownQuestions(result.text);
