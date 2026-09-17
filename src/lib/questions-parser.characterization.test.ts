@@ -6,6 +6,7 @@ import type { StudyQuestion } from "./questions.schema.ts";
 const USER = "11111111-1111-4111-8111-111111111111";
 const DOCUMENT = "22222222-2222-4222-8222-222222222222";
 const STANDARD_SET = "33333333-3333-4333-8333-333333333333";
+const TOPIC = "55555555-5555-4555-8555-555555555555";
 const SOURCE = "Academic source text about databases, transactions, isolation, recovery, and indexes. ".repeat(8);
 
 const stubUrl = `data:text/javascript,${encodeURIComponent(`
@@ -49,8 +50,8 @@ const stubUrl = `data:text/javascript,${encodeURIComponent(`
       throw error;
     }
   }
-  export function parseTopicSummarySourceRanges() { return []; }
-  export function reconstructVerifiedTopicSource() { return ""; }
+  export function parseTopicSummarySourceRanges(value) { return value; }
+  export function reconstructVerifiedTopicSource({ source }) { return source; }
   export const QUESTION_SYSTEM_PROMPT = "";
   export const PRACTICE_QUESTION_SYSTEM_PROMPT = "";
   export const MARKDOWN_QUESTION_FORMAT = "";
@@ -74,7 +75,8 @@ const previousQuestions: StudyQuestion[] = [
   },
 ];
 
-function createSupabase(options: { seedStandardSet?: boolean } = {}) {
+function createSupabase(options: { seedStandardSet?: boolean; topicId?: string } = {}) {
+  const savedPayloads: Row[] = [];
   const document = {
     id: DOCUMENT,
     user_id: USER,
@@ -82,6 +84,14 @@ function createSupabase(options: { seedStandardSet?: boolean } = {}) {
     status: "processed",
     extracted_text: SOURCE,
   };
+  const topics: Row[] = options.topicId ? [{
+    id: options.topicId,
+    document_id: DOCUMENT,
+    user_id: USER,
+    title: "Cache operations",
+    source_ranges: [{ start: 0, end: SOURCE.length }],
+    source_hash: "synthetic-source-hash",
+  }] : [];
   const questionSets: Row[] = options.seedStandardSet
     ? [{
         id: STANDARD_SET,
@@ -99,6 +109,7 @@ function createSupabase(options: { seedStandardSet?: boolean } = {}) {
     : [];
 
   return {
+    savedPayloads,
     from(table: string) {
       const filters: Array<[string, unknown, "eq" | "is"]> = [];
       const query = {
@@ -132,7 +143,7 @@ function createSupabase(options: { seedStandardSet?: boolean } = {}) {
       };
 
       function execute(): QueryResult {
-        const rows = table === "documents" ? [document] : table === "question_sets" ? questionSets : [];
+        const rows = table === "documents" ? [document] : table === "question_sets" ? questionSets : table === "document_topics" ? topics : [];
         return {
           data: rows.filter((row) =>
             filters.every(([key, value, op]) =>
@@ -147,6 +158,7 @@ function createSupabase(options: { seedStandardSet?: boolean } = {}) {
     },
     async rpc(name: string, payload: Record<string, unknown>) {
       if (name !== "create_question_set_version") throw new Error(`Unexpected RPC: ${name}`);
+      savedPayloads.push(payload);
       const id = `44444444-4444-4444-8444-${String(questionSets.length + 1).padStart(12, "4")}`;
       questionSets.push({
         id,
@@ -180,7 +192,7 @@ const mocked = new Set([
 
 let state: { markdown: string };
 let generateDocumentQuestions: (input: {
-  data: { documentId: string; regenerate?: boolean };
+  data: { documentId: string; topicId?: string; regenerate?: boolean };
   context: {
     supabase: ReturnType<typeof createSupabase>;
     userId: string;
@@ -244,6 +256,84 @@ async function parseViaPracticeQuestionGeneration(markdown: string, wrongIndexes
   });
   return result.questions;
 }
+
+const contrastStems = [
+  "Which cache operation preserves data after a session ends?",
+  "Which cache operation deletes data after a session ends?",
+];
+const standardStems = [
+  ...contrastStems,
+  "How does locking coordinate concurrent updates?",
+  "Why does recovery require durable logs?",
+  "What makes a committed transaction durable?",
+];
+
+function markdownQuestions(stems: string[]) {
+  return stems.map((stem, index) => `Question ${index + 1}: ${stem}
+A. The operation described in the material
+B. An unrelated operation
+C. A formatting change
+D. A visual setting
+Correct: A
+Explanation: The material describes the tested operation.`).join("\n\n");
+}
+
+for (const [scope, topicId] of [["document", undefined], ["topic", TOPIC]] as const) {
+  const topicScope = topicId ? { topicId } : {};
+  test(`standard ${scope} generation persists five four-option questions containing contrasting verbs`, async () => {
+    const supabase = createSupabase(topicScope);
+    state.markdown = markdownQuestions(standardStems);
+    const result = await generateDocumentQuestions({
+      data: { documentId: DOCUMENT, ...topicScope, regenerate: true },
+      context: { supabase, userId: USER, claims: { user_metadata: { locale: "en" } } },
+    });
+    assert.deepEqual(result.questions.map((question) => question.question), standardStems);
+    assert.ok(result.questions.every((question) => question.options.length === 4));
+    assert.equal(supabase.savedPayloads.length, 1);
+    assert.equal(supabase.savedPayloads[0]?.["p_kind"], "standard");
+    assert.equal(supabase.savedPayloads[0]?.["p_topic_id"], topicId ?? null);
+    assert.deepEqual(supabase.savedPayloads[0]?.["p_questions"], result.questions);
+  });
+
+  test(`standard ${scope} generation rejects exact duplicates before persistence`, async () => {
+    const supabase = createSupabase(topicScope);
+    state.markdown = markdownQuestions([standardStems[0]!, standardStems[0]!, ...standardStems.slice(2)]);
+    await assert.rejects(
+      generateDocumentQuestions({
+        data: { documentId: DOCUMENT, ...topicScope, regenerate: true },
+        context: { supabase, userId: USER, claims: { user_metadata: { locale: "en" } } },
+      }),
+      /DUPLICATE_GENERATED_QUESTION/u,
+    );
+    assert.equal(supabase.savedPayloads.length, 0);
+  });
+}
+
+test("Practice persists the requested contrast pair", async () => {
+  const supabase = createSupabase({ seedStandardSet: true });
+  state.markdown = markdownQuestions(contrastStems);
+  const result = await generatePracticeQuestions({
+    data: { documentId: DOCUMENT, questionSetId: STANDARD_SET, wrongIndexes: [0, 1] },
+    context: { supabase, userId: USER },
+  });
+  assert.deepEqual(result.questions.map((question) => question.question), contrastStems);
+  assert.equal(supabase.savedPayloads.length, 1);
+  assert.equal(supabase.savedPayloads[0]?.["p_kind"], "practice");
+  assert.equal(supabase.savedPayloads[0]?.["p_source_question_set_id"], STANDARD_SET);
+});
+
+test("Practice rejects exact duplicates before persistence", async () => {
+  const supabase = createSupabase({ seedStandardSet: true });
+  state.markdown = markdownQuestions([contrastStems[0]!, contrastStems[0]!]);
+  await assert.rejects(
+    generatePracticeQuestions({
+      data: { documentId: DOCUMENT, questionSetId: STANDARD_SET, wrongIndexes: [0, 1] },
+      context: { supabase, userId: USER },
+    }),
+    /DUPLICATE_GENERATED_QUESTION/u,
+  );
+  assert.equal(supabase.savedPayloads.length, 0);
+});
 
 test("production Questions parser accepts current EN/PT-BR labels and normalizes markdown wrappers", async () => {
   const questions = await parseViaNormalQuestionGeneration(`

@@ -6,23 +6,13 @@ function normalizedQuestion(value: string) {
     .replace(/\p{M}/gu, "")
     .toLocaleLowerCase("und")
     .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim();
-}
-
-function questionTokens(value: string) {
-  return new Set(normalizedQuestion(value).split(/\s+/u).filter(Boolean));
+    .trim()
+    // Only this supported grammatical opener may omit the copula.
+    .replace(/^qual e o /u, "qual o ");
 }
 
 export function areNearDuplicateQuestions(left: string, right: string) {
-  const normalizedLeft = normalizedQuestion(left);
-  const normalizedRight = normalizedQuestion(right);
-  if (normalizedLeft === normalizedRight) return true;
-
-  const leftTokens = questionTokens(left);
-  const rightTokens = questionTokens(right);
-  const intersection = [...leftTokens].filter((token) => rightTokens.has(token)).length;
-  const union = new Set([...leftTokens, ...rightTokens]).size;
-  return union > 0 && intersection / union >= 0.8;
+  return normalizedQuestion(left) === normalizedQuestion(right);
 }
 
 export function assertDistinctGeneratedQuestions<T extends QuestionLike>(questions: T[]) {

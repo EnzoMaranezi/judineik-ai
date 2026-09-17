@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { runReservedAiGeneration } from "./ai-generation-action.ts";
+import { assertDistinctGeneratedQuestions } from "./questions.validation.ts";
 import {
   AI_PROVIDER_CHAIN_EXHAUSTED,
   runAiProviderChain,
@@ -11,6 +12,34 @@ const attempts: AiProviderAttempt[] = [
   { provider: "nvidia", model: "primary", label: "nvidia-primary" },
   { provider: "openrouter", model: "configured", label: "openrouter-fallback" },
 ];
+
+test("duplicate validation after a provider return consumes the single reservation without persisting", async () => {
+  let reservations = 0;
+  let persisted = false;
+  const finished: string[] = [];
+  await assert.rejects(
+    runReservedAiGeneration({
+      reserve: async () => {
+        reservations += 1;
+        return "reservation";
+      },
+      generate: async () => [{ question: "What is TCP?" }, { question: "What is TCP?" }],
+      afterGenerate: async (questions) => {
+        assertDistinctGeneratedQuestions(questions);
+        persisted = true;
+        return questions;
+      },
+      finish: async (reservation, status) => {
+        assert.equal(reservation, "reservation");
+        finished.push(status);
+      },
+    }),
+    /DUPLICATE_GENERATED_QUESTION/u,
+  );
+  assert.equal(reservations, 1);
+  assert.equal(persisted, false);
+  assert.deepEqual(finished, ["succeeded"]);
+});
 
 test("does not call a provider or finish a reservation when quota reservation fails", async () => {
   let generated = false;
