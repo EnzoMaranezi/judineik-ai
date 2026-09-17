@@ -37,6 +37,7 @@ const MIN_SOURCE_TEXT_CHARS = 600;
 const MAX_SOURCE_CODE_POINTS = 100_000;
 const TOPIC_GENERATION_WAIT_MS = 5_000;
 const TOPIC_GENERATION_WAIT_ATTEMPTS = 48;
+const TOPIC_DISCOVERY_MAX_OUTPUT_TOKENS = 3_000;
 
 const sourceRangeSchema = z.object({
   start: z.number().int().nonnegative(),
@@ -250,9 +251,13 @@ export const discoverDocumentTopics = createServerFn({ method: "POST" })
         generate: () =>
           generateAiText({
             system: TOPIC_DISCOVERY_SYSTEM_PROMPT,
-            prompt: `Document title: ${document.title}\n\nSOURCE SEGMENT TOKEN MAP:\n${buildTopicSegmentMap(segments)}\n\nUse only ALLOWED_SEGMENT_TOKENS and group this material into topics now.`,
+            prompt: `Document title: ${document.title}\n\nSOURCE SEGMENTS:\n${buildTopicSegmentMap(segments)}\n\nGroup this material into topics.`,
             outputFormat: TOPIC_DISCOVERY_OUTPUT_FORMAT,
             languageInstruction: TOPIC_DISCOVERY_LANGUAGE_INSTRUCTION,
+            languageInstructionPlacement: "prompt-only",
+            languageInstructionFormat: "instruction-only",
+            maxOutputTokens: TOPIC_DISCOVERY_MAX_OUTPUT_TOKENS,
+            reasoningEffort: "low" as const,
           }),
         persist: async (generated) => {
           let parsed;
