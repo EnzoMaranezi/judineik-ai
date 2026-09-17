@@ -124,6 +124,11 @@ test("server cache, locale, quota, prompt, and persistence share one optional to
   assert.match(summaries, /reconstructVerifiedTopicSource\([\s\S]*parseTopicSummarySourceRanges\(topic\.source_ranges\)/u);
   assert.match(summaries, /reserveAiGeneration\([\s\S]*"summary"[\s\S]*localeContext\.locale,[\s\S]*topicId/u);
   assert.match(summaries, /TOPIC EXCERPT \(the only allowed source\)/u);
+  assert.match(summaries, /DOCUMENT_SUMMARY_MAX_OUTPUT_TOKENS = 1_600/u);
+  assert.match(
+    summaries,
+    /topic[\s\S]*\?[\s\S]*maxOutputTokens: TOPIC_SUMMARY_MAX_OUTPUT_TOKENS,[\s\S]*reasoningEffort: "low" as const,[\s\S]*:[\s\S]*maxOutputTokens: DOCUMENT_SUMMARY_MAX_OUTPUT_TOKENS,[\s\S]*reasoningEffort: "low" as const/u,
+  );
   assert.match(summaries, /maxOutputTokens: TOPIC_SUMMARY_MAX_OUTPUT_TOKENS/u);
   assert.match(summaries, /reasoningEffort: "low" as const/u);
   assert.match(summaries, /TOPIC_SUMMARY_MAX_OUTPUT_TOKENS = 2_500/u);

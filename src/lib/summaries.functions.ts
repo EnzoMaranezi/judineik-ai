@@ -27,6 +27,7 @@ import { MARKDOWN_SUMMARY_FORMAT, SUMMARY_SYSTEM_PROMPT } from "@/lib/summary.pr
 import { parseMarkdownSummary } from "@/lib/summary.parser";
 
 const MAX_INPUT_CHARS = 60_000;
+const DOCUMENT_SUMMARY_MAX_OUTPUT_TOKENS = 1_600;
 const TOPIC_SUMMARY_MAX_OUTPUT_TOKENS = 2_500;
 
 type SummaryVariant = {
@@ -249,7 +250,10 @@ export const generateDocumentSummary = createServerFn({ method: "POST" })
                   maxOutputTokens: TOPIC_SUMMARY_MAX_OUTPUT_TOKENS,
                   reasoningEffort: "low" as const,
                 }
-              : {}),
+              : {
+                  maxOutputTokens: DOCUMENT_SUMMARY_MAX_OUTPUT_TOKENS,
+                  reasoningEffort: "low" as const,
+                }),
           }),
         afterGenerate: async (result) => {
           const output = summarySchema.parse(parseMarkdownSummary(result.text, summaryTitle));
