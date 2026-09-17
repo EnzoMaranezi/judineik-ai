@@ -4,12 +4,11 @@ import {
   type TopicSourceRange,
 } from "./document-topics.source.ts";
 import { z } from "zod";
+import { evaluateTopicSourceEligibility } from "./topic-source-eligibility.ts";
 
 export const TOPIC_SUMMARY_SOURCE_UNAVAILABLE = "TOPIC_SOURCE_UNAVAILABLE";
 export const TOPIC_SUMMARY_SOURCE_INVALID = "INVALID_TOPIC_SOURCE_RANGE";
 export const STALE_TOPIC_SUMMARY_SOURCE = "STALE_TOPIC_SOURCE";
-
-const MIN_TOPIC_SUMMARY_CHARS = 80;
 
 const topicSourceRangesSchema = z.array(
   z.object({
@@ -47,7 +46,7 @@ export async function reconstructVerifiedTopicSource({
     throw new Error(TOPIC_SUMMARY_SOURCE_INVALID);
   }
 
-  if (groundedSource.replace(/\s+/gu, "").length < MIN_TOPIC_SUMMARY_CHARS) {
+  if (!evaluateTopicSourceEligibility(groundedSource).summary) {
     throw new Error(TOPIC_SUMMARY_SOURCE_UNAVAILABLE);
   }
   return groundedSource;

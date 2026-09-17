@@ -39,6 +39,7 @@ import {
 } from "@/lib/questions.prompt";
 import { parseMarkdownQuestions } from "@/lib/questions.parser";
 import { assertDistinctGeneratedQuestions } from "@/lib/questions.validation";
+import { evaluateTopicSourceEligibility } from "@/lib/topic-source-eligibility";
 
 const MAX_INPUT_CHARS = 60_000;
 const MIN_QUESTION_SOURCE_CHARS = 200;
@@ -120,7 +121,7 @@ async function loadTopicQuestionContext(
     sourceRanges: parseTopicSummarySourceRanges(topic.source_ranges),
     sourceHash: topic.source_hash,
   });
-  if (sourceText.replace(/\s+/gu, "").length < MIN_QUESTION_SOURCE_CHARS) {
+  if (!evaluateTopicSourceEligibility(sourceText).questions) {
     throw new Error(TOPIC_QUESTION_SOURCE_INSUFFICIENT);
   }
   return { id: topic.id, title: topic.title, sourceText };

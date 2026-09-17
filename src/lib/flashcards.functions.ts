@@ -8,6 +8,7 @@ import { runReservedAiGeneration } from "@/lib/ai-generation-action";
 import { finishAiGeneration, isAiDailyLimitError, isAiGenerationInProgressError, reserveAiGeneration } from "@/lib/ai-usage-limit.server";
 import { flashcardRatingSchema, type FlashcardDeck, type FlashcardReviewResult, type StoredFlashcard } from "@/lib/flashcards.schema";
 import { assertOwnedFlashcardDocument, parseMarkdownFlashcards } from "@/lib/flashcards.parser";
+import { evaluateTopicSourceEligibility } from "@/lib/topic-source-eligibility";
 import type { Locale, PersistedContentLocale } from "@/lib/i18n";
 import {
   parseTopicSummarySourceRanges,
@@ -207,7 +208,7 @@ async function loadTopicFlashcardContext(
     sourceRanges: parseTopicSummarySourceRanges(topic.source_ranges),
     sourceHash: topic.source_hash,
   });
-  if (sourceText.trim().length < 200) throw new Error("TOPIC_SOURCE_UNAVAILABLE");
+  if (!evaluateTopicSourceEligibility(sourceText).flashcards) throw new Error("TOPIC_SOURCE_UNAVAILABLE");
   return { id: topic.id, title: topic.title, sourceText };
 }
 
