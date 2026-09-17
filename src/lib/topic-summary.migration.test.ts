@@ -15,6 +15,7 @@ const quotaMigration = readFileSync(
   "utf8",
 );
 const summaries = readFileSync(new URL("./summaries.functions.ts", import.meta.url), "utf8");
+const summaryPrompt = readFileSync(new URL("./summary.prompt.ts", import.meta.url), "utf8");
 const sourceHelper = readFileSync(new URL("./topic-summary-source.ts", import.meta.url), "utf8");
 const topicRoute = readFileSync(
   new URL("../routes/app.materials_.$documentId.topics_.$topicId.tsx", import.meta.url),
@@ -124,11 +125,21 @@ test("server cache, locale, quota, prompt, and persistence share one optional to
   assert.match(summaries, /reconstructVerifiedTopicSource\([\s\S]*parseTopicSummarySourceRanges\(topic\.source_ranges\)/u);
   assert.match(summaries, /reserveAiGeneration\([\s\S]*"summary"[\s\S]*localeContext\.locale,[\s\S]*topicId/u);
   assert.match(summaries, /TOPIC EXCERPT \(the only allowed source\)/u);
+  assert.match(summaryPrompt, /DOCUMENT_SUMMARY_SYSTEM_PROMPT = `You are NEXA\. Create a concise/u);
+  assert.match(summaryPrompt, /DOCUMENT_MARKDOWN_SUMMARY_FORMAT = `Return Markdown with exactly these headings/u);
+  assert.match(summaryPrompt, /## Key concepts[\s\S]*## Explanations[\s\S]*## Definitions[\s\S]*## Relationships[\s\S]*## Final review[\s\S]*## Limitations/u);
+  assert.match(summaries, /system: topic \? SUMMARY_SYSTEM_PROMPT : DOCUMENT_SUMMARY_SYSTEM_PROMPT/u);
+  assert.match(summaries, /outputFormat: topic \? MARKDOWN_SUMMARY_FORMAT : DOCUMENT_MARKDOWN_SUMMARY_FORMAT/u);
+  assert.match(summaries, /languageInstructionPlacement: topic \? "system-and-prompt" : "prompt-only"/u);
+  assert.match(summaries, /languageInstructionFormat: topic \? "contract" : "instruction-only"/u);
   assert.match(summaries, /DOCUMENT_SUMMARY_MAX_OUTPUT_TOKENS = 1_600/u);
   assert.match(
     summaries,
     /topic[\s\S]*\?[\s\S]*maxOutputTokens: TOPIC_SUMMARY_MAX_OUTPUT_TOKENS,[\s\S]*reasoningEffort: "low" as const,[\s\S]*:[\s\S]*maxOutputTokens: DOCUMENT_SUMMARY_MAX_OUTPUT_TOKENS,[\s\S]*reasoningEffort: "low" as const/u,
   );
+  assert.doesNotMatch(summaries, /DOCUMENT_MARKDOWN_SUMMARY_FORMAT[\s\S]*Conceitos-chave/u);
+  assert.match(summaries, /system: topic \? SUMMARY_SYSTEM_PROMPT/u);
+  assert.match(summaries, /outputFormat: topic \? MARKDOWN_SUMMARY_FORMAT/u);
   assert.match(summaries, /maxOutputTokens: TOPIC_SUMMARY_MAX_OUTPUT_TOKENS/u);
   assert.match(summaries, /reasoningEffort: "low" as const/u);
   assert.match(summaries, /TOPIC_SUMMARY_MAX_OUTPUT_TOKENS = 2_500/u);

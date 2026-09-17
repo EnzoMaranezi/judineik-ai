@@ -22,6 +22,8 @@ type AiGenerationRequest = {
   prompt: string;
   outputFormat?: string;
   languageInstruction: string;
+  languageInstructionPlacement?: "system-and-prompt" | "prompt-only";
+  languageInstructionFormat?: "contract" | "instruction-only";
   maxOutputTokens?: number;
   reasoningEffort?: "low" | "medium" | "high";
 };
@@ -93,6 +95,8 @@ export async function generateAiText({
   prompt,
   outputFormat,
   languageInstruction: outputLanguageInstruction,
+  languageInstructionPlacement,
+  languageInstructionFormat,
   maxOutputTokens,
   reasoningEffort,
 }: AiGenerationRequest): Promise<AiTextGeneration> {
@@ -108,6 +112,8 @@ export async function generateAiText({
     prompt,
     outputFormat,
     languageInstruction: outputLanguageInstruction,
+    languageInstructionPlacement,
+    languageInstructionFormat,
   });
 
   try {

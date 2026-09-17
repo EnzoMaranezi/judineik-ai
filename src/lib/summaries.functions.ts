@@ -23,7 +23,12 @@ import {
   parseTopicSummarySourceRanges,
   reconstructVerifiedTopicSource,
 } from "@/lib/topic-summary-source";
-import { MARKDOWN_SUMMARY_FORMAT, SUMMARY_SYSTEM_PROMPT } from "@/lib/summary.prompt";
+import {
+  DOCUMENT_MARKDOWN_SUMMARY_FORMAT,
+  DOCUMENT_SUMMARY_SYSTEM_PROMPT,
+  MARKDOWN_SUMMARY_FORMAT,
+  SUMMARY_SYSTEM_PROMPT,
+} from "@/lib/summary.prompt";
 import { parseMarkdownSummary } from "@/lib/summary.parser";
 
 const MAX_INPUT_CHARS = 60_000;
@@ -239,12 +244,14 @@ export const generateDocumentSummary = createServerFn({ method: "POST" })
           ),
         generate: () =>
           generateAiText({
-            system: SUMMARY_SYSTEM_PROMPT,
+            system: topic ? SUMMARY_SYSTEM_PROMPT : DOCUMENT_SUMMARY_SYSTEM_PROMPT,
             prompt: topic
               ? `Document title: ${documentRow.title}\nTopic title: ${topic.title}\n\nTOPIC-FOCUSED MODE:\nSummarize ONLY the topic excerpt below. Do not expand into other sections of the document or add related background that is absent from this excerpt.\n\nTOPIC EXCERPT (the only allowed source):\n"""\n${summaryText.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce the structured study summary for this topic.`
               : `Document title: ${documentRow.title}\n\nMATERIAL (the only allowed source):\n"""\n${summaryText.slice(0, MAX_INPUT_CHARS)}\n"""\n\nProduce the structured study summary.`,
-            outputFormat: MARKDOWN_SUMMARY_FORMAT,
+            outputFormat: topic ? MARKDOWN_SUMMARY_FORMAT : DOCUMENT_MARKDOWN_SUMMARY_FORMAT,
             languageInstruction: localeContext.languageInstruction,
+            languageInstructionPlacement: topic ? "system-and-prompt" : "prompt-only",
+            languageInstructionFormat: topic ? "contract" : "instruction-only",
             ...(topic
               ? {
                   maxOutputTokens: TOPIC_SUMMARY_MAX_OUTPUT_TOKENS,

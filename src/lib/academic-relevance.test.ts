@@ -6,7 +6,7 @@ import {
   TOPIC_DISCOVERY_SYSTEM_PROMPT,
 } from "./document-topics.prompt.ts";
 import { PRACTICE_QUESTION_SYSTEM_PROMPT, QUESTION_SYSTEM_PROMPT } from "./questions.prompt.ts";
-import { SUMMARY_SYSTEM_PROMPT } from "./summary.prompt.ts";
+import { DOCUMENT_SUMMARY_SYSTEM_PROMPT, SUMMARY_SYSTEM_PROMPT } from "./summary.prompt.ts";
 
 const topicFunctions = readFileSync(
   new URL("./document-topics.functions.ts", import.meta.url),
@@ -27,7 +27,7 @@ test("production and compatibility paths use the reviewed prompts for every prov
   assert.match(topicFunctions, /system: TOPIC_DISCOVERY_SYSTEM_PROMPT/u);
   assert.match(questionFunctions, /system: QUESTION_SYSTEM_PROMPT/u);
   assert.match(questionFunctions, /system: PRACTICE_QUESTION_SYSTEM_PROMPT/u);
-  assert.match(summaryFunctions, /system: SUMMARY_SYSTEM_PROMPT/u);
+  assert.match(summaryFunctions, /system: topic \? SUMMARY_SYSTEM_PROMPT : DOCUMENT_SUMMARY_SYSTEM_PROMPT/u);
   assert.match(compatibilityScript, /from "\.\.\/src\/lib\/questions\.prompt\.ts"/u);
   assert.match(compatibilityScript, /from "\.\.\/src\/lib\/summary\.prompt\.ts"/u);
   assert.match(gateway, /runAiProviderChain\([\s\S]*system: messages\.system/u);
@@ -69,6 +69,9 @@ test("question contracts reject documentary recall while preserving contextual r
 });
 
 test("summary contract is study-oriented, source-grounded, and does not invent missing code analysis", () => {
+  assert.match(DOCUMENT_SUMMARY_SYSTEM_PROMPT, /source-grounded academic study summary/u);
+  assert.match(DOCUMENT_SUMMARY_SYSTEM_PROMPT, /Use only the supplied material/u);
+  assert.match(DOCUMENT_SUMMARY_SYSTEM_PROMPT, /filenames, citations, publishers, platforms/u);
   assert.match(SUMMARY_SYSTEM_PROMPT, /study-oriented rather than an inventory/u);
   assert.match(SUMMARY_SYSTEM_PROMPT, /Every substantive statement must be directly supported/u);
   assert.match(SUMMARY_SYSTEM_PROMPT, /General correctness is not sufficient evidence/u);

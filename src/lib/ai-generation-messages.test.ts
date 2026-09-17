@@ -36,3 +36,20 @@ test("keeps the English contract and fixed parser tokens intact", () => {
   assert.match(messages.prompt, /Correct: A/);
   assert.match(messages.prompt, /Explanation: explanation/);
 });
+
+test("can keep the direct language instruction only in the prompt for compact document prompts", () => {
+  const languageInstruction = "Write all user-facing generated content in English.";
+  const messages = buildAiGenerationMessages({
+    system: "Compact system prompt",
+    prompt: "Produce the summary.",
+    outputFormat: summaryFormat,
+    languageInstruction,
+    languageInstructionPlacement: "prompt-only",
+    languageInstructionFormat: "instruction-only",
+  });
+
+  assert.equal(messages.system, "Compact system prompt");
+  assert.match(messages.prompt, /in English/);
+  assert.doesNotMatch(messages.prompt, /OUTPUT LANGUAGE REQUIREMENT/);
+  assert.match(messages.prompt, /## Key concepts/);
+});
