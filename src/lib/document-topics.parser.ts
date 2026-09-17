@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { evaluateTopicSourceEligibility } from "./topic-source-eligibility.ts";
 import {
   normalizeTopicSourceRanges,
   reconstructTopicSource,
@@ -124,8 +125,11 @@ export function parseTopicDiscoveryResponse(
       source,
       topicSegments.map(({ start, end }) => ({ start, end })),
     );
-    const groundedLength = reconstructTopicSource(source, sourceRanges).replace(/\s+/gu, "").length;
-    if (groundedLength < 80) throw new Error("TOPIC_SOURCE_TOO_SHORT");
+    const groundedSource = reconstructTopicSource(source, sourceRanges);
+    const eligibility = evaluateTopicSourceEligibility(groundedSource);
+    if (!eligibility.meetsNewTopicMinimum) throw new Error("TOPIC_SOURCE_TOO_SHORT");
+    // Preserve existing broad-topic weighting; only new-topic eligibility changes here.
+    const groundedLength = groundedSource.replace(/\s+/gu, "").length;
     return {
       title: topic.title,
       description: topic.description,
