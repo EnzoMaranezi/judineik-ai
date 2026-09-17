@@ -24,6 +24,7 @@ import type { PersistedContentLocale } from "@/lib/i18n";
 interface Props {
   documentId: string;
   topicId?: string;
+  canGenerate?: boolean;
 }
 
 type AnswerState = { selected: number; correct: boolean };
@@ -53,7 +54,7 @@ function getQuestionPrompt(question: StudyQuestion) {
 }
 
 /** Generates, stores and plays a 5-question multiple-choice set for one material. */
-export function DocumentQuestionsPanel({ documentId, topicId }: Props) {
+export function DocumentQuestionsPanel({ documentId, topicId, canGenerate = true }: Props) {
   const { locale, t } = useI18n();
   const [questions, setQuestions] = useState<StudyQuestion[] | null>(null);
   const [questionSetId, setQuestionSetId] = useState<string | null>(null);
@@ -149,6 +150,7 @@ export function DocumentQuestionsPanel({ documentId, topicId }: Props) {
   }, [documentId, topicId, locale]);
 
   async function generate(regenerate = false) {
+    if (!canGenerate) return;
     setGenerating(true);
     setError(null);
     try {
@@ -174,7 +176,7 @@ export function DocumentQuestionsPanel({ documentId, topicId }: Props) {
   }
 
   async function practiceMistakes(wrong: SessionAnswer[]) {
-    if (!questionSetId || wrong.length === 0) return;
+    if (!canGenerate || !questionSetId || wrong.length === 0) return;
     setPractising(true);
     setError(null);
     try {
@@ -281,16 +283,18 @@ export function DocumentQuestionsPanel({ documentId, topicId }: Props) {
       <p className="mt-4 text-sm text-muted-foreground">
         {t(topicId ? "topics.questionsDescription" : "questions.description")}
       </p>
+      {!canGenerate ? <p className="mt-4 text-sm text-muted-foreground">{t("topics.questionsGenerationUnavailable")}</p> : null}
 
       <div className="mt-6 flex flex-wrap gap-3">
         {!questions && alternatives.length === 0 && (
-          <PrimaryButton onClick={() => void generate(false)} disabled={generating || loadingExisting}>
+          <PrimaryButton onClick={() => void generate(false)} disabled={!canGenerate || generating || loadingExisting}>
             {generating ? t("questions.generating") : t("questions.generate")}{" "}
             <Sparkles className="h-4 w-4" aria-hidden />
           </PrimaryButton>
         )}
         {questions && (
           <GhostButton
+            disabled={!canGenerate}
             onClick={() => {
               if (!generating) void generate(true);
             }}
@@ -305,6 +309,7 @@ export function DocumentQuestionsPanel({ documentId, topicId }: Props) {
           currentLocale={locale}
           variants={alternatives}
           generating={generating}
+          generationDisabled={!canGenerate}
           onGenerate={() => void generate(false)}
           onOpen={(variantLocale) => {
             const variant = alternatives.find((item) => item.locale === variantLocale);
@@ -451,6 +456,7 @@ export function DocumentQuestionsPanel({ documentId, topicId }: Props) {
           saving={saving}
           saveError={saveError}
           practising={practising}
+          generationDisabled={!canGenerate}
           onPracticeMistakes={() => {
             void practiceMistakes(sessionAnswers.filter((a) => !a.correct));
           }}
@@ -466,6 +472,7 @@ export function DocumentQuestionsPanel({ documentId, topicId }: Props) {
           answers={savedResult.answers}
           heading={t("results.lastSession")}
           practising={practising}
+          generationDisabled={!canGenerate}
           onPracticeMistakes={() => {
             void practiceMistakes(savedResult.answers.filter((a) => !a.correct));
           }}

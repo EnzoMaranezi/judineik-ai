@@ -32,7 +32,7 @@ const stubUrl = `data:text/javascript,${encodeURIComponent(`
 
 const hooks = registerHooks({
   resolve(specifier, context, nextResolve) {
-    if (["/questions.functions.ts", "/flashcards.functions.ts", "/summaries.functions.ts"].some((suffix) => context.parentURL?.endsWith(suffix))) {
+    if (["/questions.functions.ts", "/flashcards.functions.ts", "/summaries.functions.ts", "/document-topics.functions.ts"].some((suffix) => context.parentURL?.endsWith(suffix))) {
       if (["@tanstack/react-start", "@/integrations/supabase/auth-middleware", "@/lib/ai-gateway.server", "@/lib/ai-usage-limit.server", "@/lib/ai-generation-action", "@/lib/i18n"].includes(specifier)) {
         return { url: stubUrl, shortCircuit: true };
       }
@@ -49,16 +49,25 @@ const userId = "11111111-1111-4111-8111-111111111111";
 const documentId = "22222222-2222-4222-8222-222222222222";
 const topicId = "33333333-3333-4333-8333-333333333333";
 
-async function inputFor(source: string, options: { sourceHash?: string; sourceRanges?: { start: number; end: number }[] } = {}) {
-  const document = { id: documentId, user_id: userId, title: "Synthetic source", extracted_text: source };
+async function inputFor(source: string, options: { sourceHash?: string; sourceRanges?: { start: number; end: number }[]; savedContent?: boolean; savedLocale?: string; owner?: string; missingTopic?: boolean } = {}) {
+  const document = { id: documentId, user_id: options.owner ?? userId, title: "Synthetic source", extracted_text: source };
   const topic = {
     id: topicId, user_id: userId, document_id: documentId, title: "Synthetic topic",
     source_ranges: options.sourceRanges ?? [{ start: 0, end: Array.from(source).length }],
     source_hash: options.sourceHash ?? await hashTopicSource(source),
+    description: "Synthetic topic description", position: 1, discovery_model: null, created_at: "2026-01-01T00:00:00Z",
   };
+  const topics = options.missingTopic ? [] : [topic, ...[2, 3].map((position) => ({ ...topic, id: `00000000-0000-4000-8000-00000000000${position}`, position }))];
+  const set = { id: "saved-set", document_id: documentId, topic_id: topicId, topic_scope_id: topicId, locale: options.savedLocale ?? "en", created_at: topic.created_at, updated_at: topic.created_at, model: null };
+  const savedRows: Record<string, Row[]> = options.savedContent ? {
+    summaries: [{ ...set, content: { marker: "saved summary" } }],
+    question_sets: [{ ...set, kind: "standard", superseded_at: null, questions: [{ question: "Saved question", options: ["A", "B", "C", "D"], correctIndex: 0, explanation: "Saved explanation" }] }],
+    flashcard_sets: [set],
+    flashcards: [{ id: "saved-card", flashcard_set_id: set.id, front: "Saved front", back: "Saved back", position: 1, due_at: topic.created_at, last_reviewed_at: null, interval_days: 0, repetitions: 0, ease_factor: 2.5 }],
+  } : {};
   const supabase = {
     from(table: string) {
-      let rows: Row[] = table === "documents" ? [document] : table === "document_topics" ? [topic] : [];
+      let rows: Row[] = table === "documents" ? [document] : table === "document_topics" ? topics : savedRows[table] ?? [];
       const query = {
         select() { return query; },
         eq(field: string, value: unknown) { rows = rows.filter((row) => row[field] === value); return query; },
@@ -75,13 +84,17 @@ async function inputFor(source: string, options: { sourceHash?: string; sourceRa
 }
 
 type ReadHandler = (input: Awaited<ReturnType<typeof inputFor>>) => Promise<{ current: unknown }>;
-const { getDocumentQuestions } = await import("./questions.functions.ts");
-const { getDocumentFlashcards } = await import("./flashcards.functions.ts");
+const { getDocumentQuestions, generateDocumentQuestions } = await import("./questions.functions.ts");
+const { getDocumentFlashcards, generateDocumentFlashcards } = await import("./flashcards.functions.ts");
 const { getDocumentSummary } = await import("./summaries.functions.ts");
+const { getDocumentTopic } = await import("./document-topics.functions.ts");
 hooks.deregister();
 const readQuestions = getDocumentQuestions as unknown as ReadHandler;
 const readFlashcards = getDocumentFlashcards as unknown as ReadHandler;
 const readSummary = getDocumentSummary as unknown as ReadHandler;
+const generateQuestions = generateDocumentQuestions as unknown as ReadHandler;
+const generateFlashcards = generateDocumentFlashcards as unknown as ReadHandler;
+const readTopic = getDocumentTopic as unknown as (input: Awaited<ReturnType<typeof inputFor>>) => Promise<{ capabilities: { summary: boolean; questions: boolean; flashcards: boolean } }>;
 
 test("shared reconstruction uses the canonical 80-code-point Summary baseline", async () => {
   async function reconstruct(source: string) {
@@ -97,42 +110,38 @@ test("shared reconstruction uses the canonical 80-code-point Summary baseline", 
 });
 
 test("Topic Questions requires 200 non-whitespace code points, not UTF-16 units", async () => {
-  await assert.rejects(readQuestions(await inputFor("a".repeat(199))), /TOPIC_QUESTION_SOURCE_INSUFFICIENT/);
-  assert.equal((await readQuestions(await inputFor("a".repeat(200)))).current, null);
-  await assert.rejects(readQuestions(await inputFor(Array(199).fill("a").join(" \t\n"))), /TOPIC_QUESTION_SOURCE_INSUFFICIENT/);
+  await assert.rejects(generateQuestions(await inputFor("a".repeat(199))), /TOPIC_QUESTION_SOURCE_INSUFFICIENT/);
+  await assert.rejects(generateQuestions(await inputFor("a".repeat(200))), /Unexpected generation/);
+  await assert.rejects(generateQuestions(await inputFor(Array(199).fill("a").join(" \t\n"))), /TOPIC_QUESTION_SOURCE_INSUFFICIENT/);
   const supplementary = "\u{1f4d8}".repeat(100);
   assert.equal(countTopicSourceCharacters(supplementary), 100);
-  await assert.rejects(readQuestions(await inputFor(supplementary)), /TOPIC_QUESTION_SOURCE_INSUFFICIENT/);
-  assert.equal((await readQuestions(await inputFor("\u{1f4d8}".repeat(200)))).current, null);
+  await assert.rejects(generateQuestions(await inputFor(supplementary)), /TOPIC_QUESTION_SOURCE_INSUFFICIENT/);
+  await assert.rejects(generateQuestions(await inputFor("\u{1f4d8}".repeat(200))), /Unexpected generation/);
 });
 
 test("Topic Flashcards requires 200 non-whitespace code points; whitespace cannot inflate eligibility", async () => {
-  await assert.rejects(readFlashcards(await inputFor("a".repeat(199))), /TOPIC_SOURCE_UNAVAILABLE/);
-  await assert.rejects(readFlashcards(await inputFor(` \n${"a".repeat(199)}\t `)), /TOPIC_SOURCE_UNAVAILABLE/);
-  assert.equal((await readFlashcards(await inputFor("a".repeat(200)))).current, null);
+  await assert.rejects(generateFlashcards(await inputFor("a".repeat(199))), /TOPIC_SOURCE_UNAVAILABLE/);
+  await assert.rejects(generateFlashcards(await inputFor(` \n${"a".repeat(199)}\t `)), /TOPIC_SOURCE_UNAVAILABLE/);
+  await assert.rejects(generateFlashcards(await inputFor("a".repeat(200))), /Unexpected generation/);
   const spaced = Array(100).fill("a").join("  ");
   assert.equal(countTopicSourceCharacters(spaced), 100);
-  await assert.rejects(readFlashcards(await inputFor(spaced)), /TOPIC_SOURCE_UNAVAILABLE/);
-  await assert.rejects(readFlashcards(await inputFor("\u{1f4d8}".repeat(100))), /TOPIC_SOURCE_UNAVAILABLE/);
-  assert.equal((await readFlashcards(await inputFor("\u{1f4d8}".repeat(200)))).current, null);
+  await assert.rejects(generateFlashcards(await inputFor(spaced)), /TOPIC_SOURCE_UNAVAILABLE/);
+  await assert.rejects(generateFlashcards(await inputFor("\u{1f4d8}".repeat(100))), /TOPIC_SOURCE_UNAVAILABLE/);
+  await assert.rejects(generateFlashcards(await inputFor("\u{1f4d8}".repeat(200))), /Unexpected generation/);
 });
 
 for (const length of [79, 80, 199, 200]) {
   test(`topic read handlers enforce canonical ${length}-character capabilities without generation`, async () => {
     const input = await inputFor("a".repeat(length));
     if (length < 80) {
-      for (const read of [readSummary, readQuestions, readFlashcards]) {
+      for (const read of [readSummary, readQuestions, readFlashcards, readTopic]) {
         await assert.rejects(read(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
       }
     } else {
       assert.equal((await readSummary(input)).current, null);
-      if (length < 200) {
-        await assert.rejects(readQuestions(input), /^Error: TOPIC_QUESTION_SOURCE_INSUFFICIENT$/);
-        await assert.rejects(readFlashcards(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
-      } else {
-        assert.equal((await readQuestions(input)).current, null);
-        assert.equal((await readFlashcards(input)).current, null);
-      }
+      assert.equal((await readQuestions(input)).current, null);
+      assert.equal((await readFlashcards(input)).current, null);
+      assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: length >= 200, flashcards: length >= 200 });
     }
   });
 }
@@ -140,13 +149,51 @@ for (const length of [79, 80, 199, 200]) {
 test("199 canonical characters plus heavy internal whitespace remain Summary-only", async () => {
   const input = await inputFor(` \t${Array(199).fill("a").join(" \t\r\n".repeat(20))}\r\n `);
   assert.equal((await readSummary(input)).current, null);
-  await assert.rejects(readQuestions(input), /^Error: TOPIC_QUESTION_SOURCE_INSUFFICIENT$/);
-  await assert.rejects(readFlashcards(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
+  assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: false, flashcards: false });
+  await assert.rejects(generateQuestions(input), /^Error: TOPIC_QUESTION_SOURCE_INSUFFICIENT$/);
+  await assert.rejects(generateFlashcards(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
 });
 
 test("integrity errors precede capability errors in every topic read handler", async () => {
-  for (const read of [readSummary, readQuestions, readFlashcards]) {
+  for (const read of [readSummary, readQuestions, readFlashcards, readTopic]) {
     await assert.rejects(read(await inputFor("a".repeat(79), { sourceHash: "0".repeat(64) })), /^Error: STALE_TOPIC_SOURCE$/);
     await assert.rejects(read(await inputFor("a".repeat(79), { sourceRanges: [{ start: 0, end: 80 }] })), /^Error: INVALID_TOPIC_SOURCE_RANGE$/);
   }
+});
+
+test("topic capabilities use code points and expose no reconstructed source", async () => {
+  await assert.rejects(readTopic(await inputFor("\u{1f4d8}".repeat(79))), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
+  const result = await readTopic(await inputFor("\u{1f4d8}".repeat(100)));
+  assert.deepEqual(result.capabilities, { summary: true, questions: false, flashcards: false });
+  assert.deepEqual(Object.keys(result).sort(), ["capabilities", "document", "topic"]);
+  assert.deepEqual((await readTopic(await inputFor("\u{1f4d8}".repeat(200)))).capabilities, { summary: true, questions: true, flashcards: true });
+});
+
+test("legacy saved Summary, Questions and Flashcards remain readable without generation", async () => {
+  for (const length of [80, 199]) {
+    const input = await inputFor("a".repeat(length), { savedContent: true });
+    assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: false, flashcards: false });
+    for (const read of [readSummary, readQuestions, readFlashcards]) {
+      assert.ok((await read(input)).current);
+    }
+    await assert.rejects(generateQuestions(input), /TOPIC_QUESTION_SOURCE_INSUFFICIENT/);
+    await assert.rejects(generateFlashcards(input), /TOPIC_SOURCE_UNAVAILABLE/);
+  }
+});
+
+test("legacy topics keep alternate-locale and und saved content accessible", async () => {
+  for (const savedLocale of ["pt-BR", "und"]) {
+    const input = await inputFor("a".repeat(80), { savedContent: true, savedLocale });
+    for (const read of [readSummary, readQuestions, readFlashcards]) {
+      const result = await read(input) as { current: unknown; alternatives: { locale: string }[] };
+      assert.equal(result.current, null);
+      assert.equal(result.alternatives.length, 1);
+      assert.equal(result.alternatives[0]?.locale, savedLocale);
+    }
+  }
+});
+
+test("topic capabilities reject inaccessible documents and missing topics", async () => {
+  await assert.rejects(readTopic(await inputFor("a".repeat(200), { owner: "another-user" })), /^Error: TOPIC_DOCUMENT_NOT_FOUND$/);
+  await assert.rejects(readTopic(await inputFor("a".repeat(200), { missingTopic: true })), /^Error: TOPIC_NOT_FOUND$/);
 });

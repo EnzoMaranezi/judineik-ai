@@ -4,6 +4,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { generateAiText, normalizeAiError } from "@/lib/ai-gateway.server";
+import { evaluateTopicSourceEligibility } from "@/lib/topic-source-eligibility";
+import { reconstructVerifiedTopicSource } from "@/lib/topic-summary-source";
 import { pollForCachedValue, runCachedTopicDiscovery } from "@/lib/document-topics.discovery";
 import { parseTopicDiscoveryResponse } from "@/lib/document-topics.parser";
 import {
@@ -216,7 +218,17 @@ export const getDocumentTopic = createServerFn({ method: "POST" })
     const topics = await loadCurrentTopics(context.supabase, document.id, sourceHash);
     const topic = topics?.find((candidate) => candidate.id === data.topicId);
     if (!topic) throw new Error(TOPIC_NOT_FOUND);
-    return { document: { id: document.id, title: document.title }, topic };
+    const source = await reconstructVerifiedTopicSource({
+      source: document.extracted_text,
+      sourceRanges: topic.sourceRanges,
+      sourceHash: topic.sourceHash,
+    });
+    const { summary, questions, flashcards } = evaluateTopicSourceEligibility(source);
+    return {
+      document: { id: document.id, title: document.title },
+      topic,
+      capabilities: { summary, questions, flashcards },
+    };
   });
 
 export const waitForDocumentTopics = createServerFn({ method: "POST" })

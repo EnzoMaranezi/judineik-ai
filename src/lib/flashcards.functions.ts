@@ -188,6 +188,7 @@ async function loadTopicFlashcardContext(
   userId: string,
   document: FlashcardDocument,
   topicId: string,
+  requireGenerationSource = true,
 ) {
   const { data: topic, error } = await supabase
     .from("document_topics")
@@ -208,7 +209,7 @@ async function loadTopicFlashcardContext(
     sourceRanges: parseTopicSummarySourceRanges(topic.source_ranges),
     sourceHash: topic.source_hash,
   });
-  if (!evaluateTopicSourceEligibility(sourceText).flashcards) throw new Error("TOPIC_SOURCE_UNAVAILABLE");
+  if (requireGenerationSource && !evaluateTopicSourceEligibility(sourceText).flashcards) throw new Error("TOPIC_SOURCE_UNAVAILABLE");
   return { id: topic.id, title: topic.title, sourceText };
 }
 
@@ -220,7 +221,7 @@ export const getDocumentFlashcards = createServerFn({ method: "POST" })
     const topicId = data.topicId ?? null;
     if (topicId) {
       const document = await loadOwnedFlashcardDocument(context.supabase, context.userId, data.documentId);
-      await loadTopicFlashcardContext(context.supabase, context.userId, document, topicId);
+      await loadTopicFlashcardContext(context.supabase, context.userId, document, topicId, false);
     }
     return loadDeckAvailability(context.supabase, data.documentId, locale, topicId);
   });

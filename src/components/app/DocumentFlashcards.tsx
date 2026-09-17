@@ -12,7 +12,7 @@ import { AiGenerationProgress } from "@/components/app/AiGenerationProgress";
 
 type FlashcardMode = "review" | "browse";
 
-export function DocumentFlashcardsPanel({ documentId, topicId }: { documentId: string; topicId?: string }) {
+export function DocumentFlashcardsPanel({ documentId, topicId, canGenerate = true }: { documentId: string; topicId?: string; canGenerate?: boolean }) {
   const { locale, t } = useI18n();
   const [cards, setCards] = useState<StoredFlashcard[] | null>(null);
   const [flashcardSetId, setFlashcardSetId] = useState<string | null>(null);
@@ -96,6 +96,7 @@ export function DocumentFlashcardsPanel({ documentId, topicId }: { documentId: s
   }
 
   async function generate() {
+    if (!canGenerate) return;
     setGenerating(true); setError(null);
     try {
       const deck = await generateDocumentFlashcards({ data: { documentId, topicId } });
@@ -163,15 +164,17 @@ export function DocumentFlashcardsPanel({ documentId, topicId }: { documentId: s
   ];
 
   return <div id="flashcards"><AppCard>
-    <AppLabel>{cards ? t("flashcards.savedLabel") : t("flashcards.readyLabel")}</AppLabel>
-    <p className="mt-4 text-sm text-muted-foreground">{checking ? t("flashcards.checking") : cards ? t("flashcards.saved") : t("flashcards.ready")}</p>
-    {!checking && !error && !cards && alternatives.length === 0 ? <PrimaryButton className="mt-6" onClick={() => void generate()} disabled={generating}>
+    <AppLabel>{cards ? t("flashcards.savedLabel") : t(canGenerate ? "flashcards.readyLabel" : "flashcards.panel")}</AppLabel>
+    <p className="mt-4 text-sm text-muted-foreground">{checking ? t("flashcards.checking") : cards ? t("flashcards.saved") : t(canGenerate ? "flashcards.ready" : "topics.flashcardsGenerationUnavailable")}</p>
+    {!canGenerate && (checking || cards) ? <p className="mt-4 text-sm text-muted-foreground">{t("topics.flashcardsGenerationUnavailable")}</p> : null}
+    {!checking && !error && !cards && alternatives.length === 0 ? <PrimaryButton className="mt-6" onClick={() => void generate()} disabled={!canGenerate || generating}>
       {generating ? t("flashcards.generating") : t("flashcards.generate")} <Sparkles className="size-4" aria-hidden />
     </PrimaryButton> : null}
     {!checking && !currentAvailable && alternatives.length > 0 ? <GeneratedContentLanguageState
       currentLocale={locale}
       variants={alternatives}
       generating={generating}
+      generationDisabled={!canGenerate}
       onGenerate={() => void generate()}
       onOpen={(variantLocale) => {
         const variant = alternatives.find((item) => item.locale === variantLocale);

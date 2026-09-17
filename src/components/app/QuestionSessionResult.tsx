@@ -23,6 +23,7 @@ interface Props {
   onPracticeMistakes?: () => void;
   practising?: boolean;
   heading?: string;
+  generationDisabled?: boolean;
 }
 
 function getQuestionPrompt(question: StudyQuestion) {
@@ -53,6 +54,7 @@ export function QuestionSessionResult({
   onPracticeMistakes,
   practising = false,
   heading,
+  generationDisabled = false,
 }: Props) {
   const { t } = useI18n();
   const [open, setOpen] = useState<number | null>(null);
@@ -222,12 +224,12 @@ export function QuestionSessionResult({
           </Link>
         )}
         {onNewSession ? (
-          <GhostButton onClick={onNewSession}>
+          <GhostButton onClick={onNewSession} disabled={generationDisabled}>
             {t("results.newSession")} <span aria-hidden>→</span>
           </GhostButton>
         ) : null}
         {onPracticeMistakes && incorrect > 0 ? (
-          <GhostButton onClick={onPracticeMistakes} disabled={practising}>
+          <GhostButton onClick={onPracticeMistakes} disabled={practising || generationDisabled}>
             {practising ? t("results.preparingPractice") : t("results.practiceMistakes")}{" "}
             <span aria-hidden>→</span>
           </GhostButton>

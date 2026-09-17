@@ -28,12 +28,14 @@ export function GeneratedContentLanguageState({
   generating,
   onGenerate,
   onOpen,
+  generationDisabled = false,
 }: {
   currentLocale: Locale;
   variants: Variant[];
   generating: boolean;
   onGenerate: () => void;
   onOpen: (locale: PersistedContentLocale) => void;
+  generationDisabled?: boolean;
 }) {
   const { t } = useI18n();
   const primaryVariant = variants.find((variant) => variant.locale !== "und") ?? variants[0];
@@ -45,7 +47,7 @@ export function GeneratedContentLanguageState({
         {primaryVariant ? t(noticeKey(primaryVariant.locale)) : null}
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
-        <PrimaryButton onClick={onGenerate} disabled={generating}>
+        <PrimaryButton onClick={onGenerate} disabled={generating || generationDisabled}>
           {t(generateKey(currentLocale))}
         </PrimaryButton>
         {variants.map((variant) => (

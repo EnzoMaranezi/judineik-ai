@@ -13,6 +13,7 @@ import {
   type StoredDocumentTopic,
 } from "@/lib/document-topics.functions";
 import { useI18n } from "@/lib/i18n";
+import { TOPIC_SUMMARY_SOURCE_INVALID, TOPIC_SUMMARY_SOURCE_UNAVAILABLE } from "@/lib/topic-summary-source";
 
 export const Route = createFileRoute("/app/materials_/$documentId/topics_/$topicId")({
   component: DocumentTopicDetailPage,
@@ -24,6 +25,7 @@ function DocumentTopicDetailPage() {
   const [state, setState] = useState<{
     document: { id: string; title: string };
     topic: StoredDocumentTopic;
+    capabilities: { summary: boolean; questions: boolean; flashcards: boolean };
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,8 @@ function DocumentTopicDetailPage() {
         if (message.includes(STALE_TOPIC_SOURCE)) setError(t("topics.stale"));
         else if (message.includes(TOPIC_DOCUMENT_NOT_FOUND)) setError(t("topics.documentMissing"));
         else if (message.includes(TOPIC_NOT_FOUND)) setError(t("topics.topicMissing"));
+        else if (message.includes(TOPIC_SUMMARY_SOURCE_INVALID)) setError(t("topics.summarySourceInvalid"));
+        else if (message.includes(TOPIC_SUMMARY_SOURCE_UNAVAILABLE)) setError(t("topics.summarySourceUnavailable"));
         else setError(t("topics.genericError"));
       })
       .finally(() => {
@@ -94,8 +98,8 @@ function DocumentTopicDetailPage() {
             documentTitle={state.topic.title}
             topicId={state.topic.id}
           />
-          <DocumentQuestionsPanel documentId={state.document.id} topicId={state.topic.id} />
-          <DocumentFlashcardsPanel documentId={state.document.id} topicId={state.topic.id} />
+          <DocumentQuestionsPanel documentId={state.document.id} topicId={state.topic.id} canGenerate={state.capabilities.questions} />
+          <DocumentFlashcardsPanel documentId={state.document.id} topicId={state.topic.id} canGenerate={state.capabilities.flashcards} />
         </>
       ) : null}
     </div>

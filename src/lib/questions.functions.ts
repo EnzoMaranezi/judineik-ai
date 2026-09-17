@@ -101,6 +101,7 @@ async function loadTopicQuestionContext(
   userId: string,
   document: QuestionDocument,
   topicId: string,
+  requireGenerationSource = true,
 ) {
   const { data: topic, error } = await supabase
     .from("document_topics")
@@ -121,7 +122,7 @@ async function loadTopicQuestionContext(
     sourceRanges: parseTopicSummarySourceRanges(topic.source_ranges),
     sourceHash: topic.source_hash,
   });
-  if (!evaluateTopicSourceEligibility(sourceText).questions) {
+  if (requireGenerationSource && !evaluateTopicSourceEligibility(sourceText).questions) {
     throw new Error(TOPIC_QUESTION_SOURCE_INSUFFICIENT);
   }
   return { id: topic.id, title: topic.title, sourceText };
@@ -188,7 +189,7 @@ export const getDocumentQuestions = createServerFn({ method: "POST" })
     const topicId = data.topicId ?? null;
     if (topicId) {
       const document = await loadOwnedQuestionDocument(supabase, userId, data.documentId);
-      await loadTopicQuestionContext(supabase, userId, document, topicId);
+      await loadTopicQuestionContext(supabase, userId, document, topicId, false);
     }
     const query = supabase
       .from("question_sets")

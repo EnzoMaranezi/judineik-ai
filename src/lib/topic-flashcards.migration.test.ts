@@ -132,7 +132,7 @@ test("every deck and review-queue lookup is explicitly scoped", () => {
 test("Topic Detail reuses the existing panel without introducing another generator", () => {
   assert.match(topicRoute, /<DocumentFlashcardsPanel documentId=\{state\.document\.id\} topicId=\{state\.topic\.id\}/u);
   assert.doesNotMatch(topicRoute, /generateDocumentFlashcards/u);
-  assert.match(component, /DocumentFlashcardsPanel\(\{ documentId, topicId \}/u);
+  assert.match(component, /DocumentFlashcardsPanel\(\{ documentId, topicId, canGenerate = true \}/u);
 });
 
 test("Overview loads topic metadata and navigates each scope correctly", () => {

@@ -261,6 +261,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "topics.summarySourceInvalid":
       "This topic's saved source ranges are invalid and cannot be summarized safely.",
     "topics.questionsDescription": "Five multiple-choice questions written only from this topic.",
+    "topics.questionsGenerationUnavailable": "This topic does not have enough source content to generate questions. Saved questions remain available.",
+    "topics.flashcardsGenerationUnavailable": "This topic does not have enough source content to generate flashcards. Saved flashcards remain available.",
     "topics.questionsReading": "Reading this topic...",
     "topics.questionsStale":
       "This topic no longer matches the current material. Analyze the material's topics again before generating questions.",
@@ -997,6 +999,8 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Os trechos salvos deste tópico são inválidos e não podem ser resumidos com segurança.",
     "topics.questionsDescription":
       "Cinco questões de múltipla escolha criadas somente a partir deste tópico.",
+    "topics.questionsGenerationUnavailable": "Este tópico não possui conteúdo suficiente para gerar questões. As questões salvas continuam disponíveis.",
+    "topics.flashcardsGenerationUnavailable": "Este tópico não possui conteúdo suficiente para gerar flashcards. Os flashcards salvos continuam disponíveis.",
     "topics.questionsReading": "Lendo este tópico...",
     "topics.questionsStale":
       "Este tópico não corresponde mais ao material atual. Analise os tópicos do material novamente antes de gerar questões.",
