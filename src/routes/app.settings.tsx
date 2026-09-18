@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AppCard, AppLabel, GhostButton, PrimaryButton } from "@/components/app/ui";
+import { AppCard, AppLabel, PrimaryButton } from "@/components/app/ui";
 import { AccountDeletionForm } from "@/components/app/AccountDeletionForm";
 import {
   AlertDialog,
@@ -245,12 +245,10 @@ function SettingsPage() {
         </AppCard>
 
         <AppCard>
-          <AppLabel>{t("settings.plan")}</AppLabel>
+          <AppLabel>{t("settings.aiUsage")}</AppLabel>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-surface-2/40 px-4 py-4">
             <div>
-              <p className="label-mono">{t("settings.currentPlan")}</p>
-              <p className="mt-2 text-2xl tracking-tight">{t("settings.free")}</p>
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {t("settings.aiGenerationsToday")}:{" "}
                 {aiUsage
                   ? t("settings.aiGenerationsUsage", {
@@ -260,7 +258,6 @@ function SettingsPage() {
                   : t("common.loading")}
               </p>
             </div>
-            <GhostButton disabled>{t("settings.upgradeComingSoon")}</GhostButton>
           </div>
         </AppCard>
 
