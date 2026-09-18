@@ -27,10 +27,10 @@ export const Route = createFileRoute("/app")({
       {
         name: "description",
         content:
-          "Your NEXA academic workspace: materials, AI-generated study plans, active recall sessions and learning progress.",
+          "Your NEXA academic workspace: materials, summaries, questions, flashcards and learning progress.",
       },
       { property: "og:title", content: "NEXA Workspace" },
-      { property: "og:description", content: "Materials, study plans, sessions and progress." },
+      { property: "og:description", content: "Materials, summaries, questions, flashcards and progress." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },

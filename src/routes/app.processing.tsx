@@ -17,9 +17,9 @@ export const Route = createFileRoute("/app/processing")({
   head: () => ({
     meta: [
       { title: "Understanding your material — NEXA" },
-      { name: "description", content: "Your academic agent is mapping the knowledge in your material." },
+      { name: "description", content: "Preparing your material for document study." },
       { property: "og:title", content: "Understanding your material — NEXA" },
-      { property: "og:description", content: "Mapping the knowledge inside your material." },
+      { property: "og:description", content: "Preparing your material for document study." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -73,7 +73,7 @@ function Processing() {
         const inputContext =
           pendingInput?.documentId === documentId || !documentId ? pendingInput : inputFromDocumentId;
         if (!inputContext) {
-          throw new Error("Add a material before building a study plan.");
+          throw new Error("Add a material before studying.");
         }
         const input = inputContext.documentId
           ? await loadProcessedDocumentInput(inputContext.documentId)
@@ -97,7 +97,10 @@ function Processing() {
         });
         storageService.clearProgress();
 
-        if (!cancelled) navigate({ to: "/app/plan", search: { documentId: input.documentId } });
+        if (!cancelled) {
+          if (input.documentId) navigate({ to: "/app/summary/$documentId", params: { documentId: input.documentId } });
+          else navigate({ to: "/app/materials" });
+        }
       } catch (error) {
         if (!cancelled) {
           console.error("Processing material failed", error);

@@ -45,7 +45,7 @@ export function FeatureBento() {
         <Card
           label={t("landing.aiTutorLabel")}
           title={t("landing.aiTutorTitle")}
-          className="lg:col-span-4"
+          className="lg:col-span-6"
         >
           <div className="space-y-3">
             <div className="ml-auto max-w-sm rounded-2xl rounded-br-sm border border-border bg-surface-2 p-4 text-sm leading-relaxed">
@@ -60,11 +60,6 @@ export function FeatureBento() {
           </div>
         </Card>
 
-        <Card label={t("landing.knowledgeMapLabel")} title={t("landing.knowledgeMapTitle")} className="lg:col-span-2">
-          <pre className="font-mono text-[11px] leading-relaxed text-muted-foreground">
-            {t("landing.knowledgeTree")}
-          </pre>
-        </Card>
 
         <Card label={t("landing.flashcardsLabel")} title={t("landing.flashcardsTitle")} className="lg:col-span-2">
           <div className="rounded-xl border border-border bg-surface-2 p-6">

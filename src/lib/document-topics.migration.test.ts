@@ -176,8 +176,9 @@ test("server cache and distributed in-progress handling prevent duplicate discov
   assert.match(migration, /kind = p_kind\s+AND locale = p_locale\s+AND status = 'reserved'/u);
 });
 
-test("the UI exposes no-topic, loading, cache, locale-safe navigation, and no downstream topic generation", () => {
-  assert.match(materials, /materials\.studyTopics/u);
+test("legacy topic UI is retained behind recovery with no Materials entry point", () => {
+  assert.doesNotMatch(materials, /materials\.studyTopics/u);
+  assert.match(topicsRoute, /beforeLoad: \(\) => \{ throw notFound\(\); \}/u);
   assert.match(topicsRoute, /topics\.notAnalyzed/u);
   assert.match(topicsRoute, /topics\.analyzing/u);
   assert.match(topicsRoute, /AI_GENERATION_IN_PROGRESS[\s\S]*setWaiting\(true\)[\s\S]*waitForDocumentTopics/u);

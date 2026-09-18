@@ -185,6 +185,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "overview.flashcardsDueMaterial": "You have reviews due in {title}.",
     "overview.flashcardsDueTopic": "You have reviews due for the topic {title}.",
     "overview.reviewFlashcardsNow": "Review now",
+    "overview.flashcardsNoDocumentReviews": "No document flashcards due right now",
+    "overview.flashcardsOpenMaterial": "Open a material to view its flashcards.",
     "overview.flashcardsUpToDate": "Reviews up to date",
     "overview.flashcardsNextReview": "Your next flashcard will be available on {date}.",
     "overview.flashcardsNoFutureReview":
@@ -289,7 +291,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "material.uploading": "Uploading...",
     "material.saving": "Saving...",
     "material.chooseAnother": "Choose another file",
-    "material.continueStudy": "Continue to study session",
+    "material.continueStudy": "Open document summary",
     "material.pasteInstead": "or paste your notes instead ->",
     "material.pasteTitle": "Paste your notes.",
     "material.pastePlaceholder":
@@ -306,11 +308,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "material.uploadError": "Something went wrong while uploading. Please try again.",
     "processing.label": "Processing",
     "processing.title": "Understanding your material.",
-    "processing.description": "We're preparing your material and identifying the concepts for your study plan.",
+    "processing.description": "We're preparing your material for summaries, questions and flashcards.",
     "processing.error": "We couldn't prepare this material. Please try again.",
     "processing.stage.preparing": "Preparing material",
     "processing.stage.analyzing": "Analyzing content and identifying concepts",
-    "processing.stage.finalizing": "Finalizing your study plan",
+    "processing.stage.finalizing": "Opening your material",
     "summary.source": "Source material",
     "summary.studyQuestions": "Study questions from this material",
     "summary.panel": "AI summary",
@@ -572,11 +574,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.agent": "The AI academic agent",
     "landing.headline": "Your academic life, understood by AI.",
     "landing.heroBody":
-      "Upload what you're learning. Your AI builds the system around it - sessions, questions, reviews and a plan that adapts every day.",
+      "Upload your study material. Create summaries, practice questions and review flashcards from your documents.",
     "landing.yourKnowledge": "Your knowledge",
     "landing.nextReview": "Next review",
     "landing.todayTime": "Today - 19:30",
-    "landing.reviewCounts": "3 concepts - 12 questions - 8 flashcards",
+    "landing.reviewCounts": "12 questions - 8 flashcards",
     "landing.readyToReview": "You are ready to review",
     "landing.retention": "Retention",
     "landing.session": "Session",
@@ -689,7 +691,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.workflowFileMeta": "4.2 MB - 38 pages",
     "landing.resultChapter": "Result - Chapter 3",
     "landing.workflowBody":
-      "Your first session is scheduled for tonight at 19:30 and starts with the two concepts this chapter depends on.",
+      "Open your material to create a summary, practice questions or review flashcards.",
     "landing.studySessionLabel": "Study session",
     "landing.studySessionTitle": "It doesn't answer. It",
     "landing.studySessionHighlight": "teaches.",
@@ -917,6 +919,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "overview.flashcardsDueMaterial": "Voce tem revisoes pendentes em {title}.",
     "overview.flashcardsDueTopic": "Voce tem revisoes pendentes no topico {title}.",
     "overview.reviewFlashcardsNow": "Revisar agora",
+    "overview.flashcardsNoDocumentReviews": "Nenhum flashcard de documento para revisar agora",
+    "overview.flashcardsOpenMaterial": "Abra um material para ver seus flashcards.",
     "overview.flashcardsUpToDate": "Revisoes em dia",
     "overview.flashcardsNextReview": "Seu proximo flashcard estara disponivel em {date}.",
     "overview.flashcardsNoFutureReview": "Ainda nao ha revisoes futuras agendadas neste idioma.",
@@ -1024,7 +1028,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "material.uploading": "Enviando...",
     "material.saving": "Salvando...",
     "material.chooseAnother": "Escolher outro arquivo",
-    "material.continueStudy": "Continuar para sessao de estudo",
+    "material.continueStudy": "Abrir resumo do documento",
     "material.pasteInstead": "ou cole suas anotacoes ->",
     "material.pasteTitle": "Cole suas anotacoes.",
     "material.pastePlaceholder":
@@ -1041,11 +1045,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "material.uploadError": "Algo deu errado durante o envio. Tente novamente.",
     "processing.label": "Processamento",
     "processing.title": "Entendendo seu material.",
-    "processing.description": "Estamos preparando seu material e identificando os conceitos para seu plano de estudo.",
+    "processing.description": "Estamos preparando seu material para resumos, perguntas e flashcards.",
     "processing.error": "Não foi possível preparar este material. Tente novamente.",
     "processing.stage.preparing": "Preparando material",
     "processing.stage.analyzing": "Analisando o conteúdo e identificando conceitos",
-    "processing.stage.finalizing": "Finalizando seu plano de estudo",
+    "processing.stage.finalizing": "Abrindo seu material",
     "summary.source": "Material fonte",
     "summary.studyQuestions": "Perguntas de estudo deste material",
     "summary.panel": "Resumo de IA",
@@ -1310,11 +1314,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.agent": "O agente academico de IA",
     "landing.headline": "Sua vida academica, entendida por IA.",
     "landing.heroBody":
-      "Envie o que voce esta aprendendo. Sua IA monta o sistema ao redor disso - sessoes, perguntas, revisoes e um plano que se adapta todos os dias.",
+      "Envie seu material de estudo. Crie resumos, pratique perguntas e revise flashcards a partir dos seus documentos.",
     "landing.yourKnowledge": "Seu conhecimento",
     "landing.nextReview": "Proxima revisao",
     "landing.todayTime": "Hoje - 19:30",
-    "landing.reviewCounts": "3 conceitos - 12 perguntas - 8 flashcards",
+    "landing.reviewCounts": "12 perguntas - 8 flashcards",
     "landing.readyToReview": "Voce esta pronto para revisar",
     "landing.retention": "Retencao",
     "landing.session": "Sessao",
@@ -1427,7 +1431,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.workflowFileMeta": "4.2 MB - 38 paginas",
     "landing.resultChapter": "Resultado - Capitulo 3",
     "landing.workflowBody":
-      "Sua primeira sessao esta agendada para hoje as 19:30 e comeca pelos dois conceitos dos quais este capitulo depende.",
+      "Abra seu material para criar um resumo, praticar perguntas ou revisar flashcards.",
     "landing.studySessionLabel": "Sessao de estudo",
     "landing.studySessionTitle": "Ele nao responde. Ele",
     "landing.studySessionHighlight": "ensina.",
@@ -1593,9 +1597,9 @@ export const landingContent: Record<
       {
         n: "02",
         title: "Understand",
-        line: "Your AI maps the knowledge.",
-        body: "Concepts, relationships, difficulty, dependencies and the gaps between them.",
-        items: ["14 concepts", "31 relations", "6 dependencies", "3 gaps"],
+        line: "Understand your document.",
+        body: "Summaries, explanations and definitions grounded in your material.",
+        items: ["Summary", "Explanations", "Definitions", "Review"],
       },
       {
         n: "03",
@@ -1635,15 +1639,15 @@ export const landingContent: Record<
     faqs: [
       {
         q: "What is the Academic AI Agent?",
-        a: "It is a persistent agent that reads your academic material, builds a knowledge map from it, and runs your studying - sessions, questions, reviews and recommendations - instead of waiting for prompts.",
+        a: "NEXA helps you study your documents with summaries, practice questions and flashcards.",
       },
       {
         q: "Can I upload my own PDFs?",
-        a: "Yes. PDFs, slides, lecture notes, exercise lists and papers. The agent extracts concepts, relationships and difficulty from each document.",
+        a: "Yes. Upload a PDF or paste your notes, then create summaries, questions and flashcards from the material.",
       },
       {
         q: "Does the AI remember what I study?",
-        a: "Memory is the core of the product. It keeps a learning profile of every concept you have seen, what you struggled with, and when a topic is due for reinforcement.",
+        a: "Your saved materials, generated content, question sessions and flashcard reviews remain available in your account.",
       },
       {
         q: "Can it generate questions?",
@@ -1696,13 +1700,13 @@ export const landingContent: Record<
     ],
     workflowLog: [
       "Analyzing document...",
-      "Extracting concepts...",
-      "Mapping dependencies...",
+      "Reading document text...",
+      "Preparing summary...",
       "Generating questions...",
-      "Building study plan...",
+      "Preparing flashcards...",
     ],
     workflowResult: [
-      ["14", "Concepts"],
+      ["1", "Summary"],
       ["27", "Questions"],
       ["38", "Flashcards"],
       ["03", "Weak areas"],
@@ -1710,7 +1714,7 @@ export const landingContent: Record<
     ],
     howSteps: [
       ["01", "Upload", "Bring your academic material - any format, no preparation."],
-      ["02", "Let AI understand it", "Your agent maps concepts, difficulty and relationships."],
+      ["02", "Create study content", "Generate a summary, questions or flashcards from your document."],
       ["03", "Study", "Follow personalized sessions and improve measurably over time."],
     ],
     dailyTasks: [
@@ -1768,9 +1772,9 @@ export const landingContent: Record<
       {
         n: "02",
         title: "Entender",
-        line: "Sua IA mapeia o conhecimento.",
-        body: "Conceitos, relacoes, dificuldade, dependencias e lacunas entre eles.",
-        items: ["14 conceitos", "31 relacoes", "6 dependencias", "3 lacunas"],
+        line: "Entenda seu documento.",
+        body: "Resumos, explicações e definições baseados no seu material.",
+        items: ["Resumo", "Explicações", "Definições", "Revisão"],
       },
       {
         n: "03",
@@ -1810,15 +1814,15 @@ export const landingContent: Record<
     faqs: [
       {
         q: "O que e o Agente Academico de IA?",
-        a: "E um agente persistente que le seu material academico, cria um mapa de conhecimento e conduz seus estudos - sessoes, perguntas, revisoes e recomendacoes - em vez de esperar prompts.",
+        a: "O NEXA ajuda você a estudar seus documentos com resumos, perguntas de prática e flashcards.",
       },
       {
         q: "Posso enviar meus proprios PDFs?",
-        a: "Sim. PDFs, slides, anotacoes de aula, listas de exercicios e artigos. O agente extrai conceitos, relacoes e dificuldade de cada documento.",
+        a: "Sim. Envie um PDF ou cole suas anotações e crie resumos, perguntas e flashcards a partir do material.",
       },
       {
         q: "A IA lembra o que eu estudo?",
-        a: "Memoria e o centro do produto. Ela mantem um perfil de aprendizagem de cada conceito que voce viu, onde teve dificuldade e quando um tema precisa de reforco.",
+        a: "Seus materiais salvos, conteúdos gerados, sessões de perguntas e revisões de flashcards continuam disponíveis na sua conta.",
       },
       {
         q: "Ela consegue gerar perguntas?",
@@ -1885,13 +1889,13 @@ export const landingContent: Record<
     ],
     workflowLog: [
       "Analisando documento...",
-      "Extraindo conceitos...",
-      "Mapeando dependencias...",
+      "Lendo o texto do documento...",
+      "Preparando resumo...",
       "Gerando perguntas...",
-      "Montando plano de estudo...",
+      "Preparando flashcards...",
     ],
     workflowResult: [
-      ["14", "Conceitos"],
+      ["1", "Resumo"],
       ["27", "Perguntas"],
       ["38", "Flashcards"],
       ["03", "Areas fracas"],
@@ -1899,7 +1903,7 @@ export const landingContent: Record<
     ],
     howSteps: [
       ["01", "Enviar", "Traga seu material academico - qualquer formato, sem preparacao."],
-      ["02", "Deixe a IA entender", "Seu agente mapeia conceitos, dificuldade e relacoes."],
+      ["02", "Crie conteúdo de estudo", "Gere um resumo, perguntas ou flashcards a partir do documento."],
       [
         "03",
         "Estudar",

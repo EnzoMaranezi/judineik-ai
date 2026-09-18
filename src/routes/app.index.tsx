@@ -16,7 +16,7 @@ import { runOverviewLoad, type OverviewLoadState } from "@/lib/overview-load-sta
 import { getFlashcardReviewOverview } from "@/lib/flashcards.overview.functions";
 import type { FlashcardReviewOverview } from "@/lib/flashcards.overview";
 import { useI18n, type TranslationKey } from "@/lib/i18n";
-import { formatAbsoluteDate, formatDateTime } from "@/lib/dates";
+import { formatAbsoluteDate } from "@/lib/dates";
 import { listDocuments, type StoredDocument } from "@/services/documentService";
 
 export const Route = createFileRoute("/app/")({
@@ -135,10 +135,12 @@ function Dashboard() {
 
   const overview = overviewLoadState.status === "success" ? overviewLoadState.data : null;
   const overviewFailed = overviewLoadState.status === "error";
-  const activeSession = overview?.activeSession ?? null;
+  const activeSession = overview?.activeSession?.topicScopeId ? null : overview?.activeSession ?? null;
   const lastSession = overview?.recent[0] ?? null;
   const todaySession = activeSession ?? lastSession;
   const recommendation = buildRecommendation(overview, documents, t);
+  const documentReviews = flashcardOverview?.dueByScope.filter((scope) => scope.topicId === null) ?? [];
+  const documentReviewsDue = documentReviews.reduce((total, scope) => total + scope.dueCount, 0);
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-8">
@@ -276,39 +278,27 @@ function Dashboard() {
             <p className="mt-5 text-sm text-muted-foreground">
               {t("overview.flashcardsUnavailable")}
             </p>
-          ) : flashcardOverview.totalDue > 0 ? (
+          ) : documentReviewsDue > 0 ? (
             (() => {
-              const primary = flashcardOverview.dueByScope[0]!;
+              const primary = documentReviews[0]!;
               return (
                 <div className="mt-5 flex flex-col justify-between gap-6 md:flex-row md:items-end">
                   <div>
                     <h2 className="text-2xl tracking-tight md:text-3xl">
                       {t(
-                        flashcardOverview.totalDue === 1
+                        documentReviewsDue === 1
                           ? "overview.flashcardDueCount"
                           : "overview.flashcardsDueCount",
-                        { count: flashcardOverview.totalDue },
+                        { count: documentReviewsDue },
                       )}
                     </h2>
                     <p className="mt-3 text-sm text-muted-foreground">
                       {t(
-                        primary.topicId
-                          ? "overview.flashcardsDueTopic"
-                          : "overview.flashcardsDueMaterial",
-                        { title: primary.topicTitle ?? primary.documentTitle },
+                        "overview.flashcardsDueMaterial",
+                        { title: primary.documentTitle },
                       )}
                     </p>
                   </div>
-                  {primary.topicId ? (
-                    <Link
-                      to="/app/materials/$documentId/topics/$topicId"
-                      params={{ documentId: primary.documentId, topicId: primary.topicId }}
-                      hash="flashcards"
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-lime px-6 py-3 text-sm font-medium text-background transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-lime)]"
-                    >
-                      {t("overview.reviewFlashcardsNow")} <span aria-hidden>→</span>
-                    </Link>
-                  ) : (
                     <Link
                       to="/app/flashcards/$documentId"
                       params={{ documentId: primary.documentId }}
@@ -316,31 +306,17 @@ function Dashboard() {
                     >
                       {t("overview.reviewFlashcardsNow")} <span aria-hidden>→</span>
                     </Link>
-                  )}
                 </div>
               );
             })()
-          ) : flashcardOverview.hasDecks ? (
-            <div className="mt-5">
-              <h2 className="text-2xl tracking-tight md:text-3xl">
-                {t("overview.flashcardsUpToDate")}
-              </h2>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {flashcardOverview.nextDueAt
-                  ? t("overview.flashcardsNextReview", {
-                      date: formatDateTime(flashcardOverview.nextDueAt, locale),
-                    })
-                  : t("overview.flashcardsNoFutureReview")}
-              </p>
-            </div>
           ) : (
             <div className="mt-5 flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div>
                 <h2 className="text-2xl tracking-tight md:text-3xl">
-                  {t("overview.flashcardsNoDecks")}
+                  {t("overview.flashcardsNoDocumentReviews")}
                 </h2>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {t("overview.flashcardsNoDecksBody")}
+                  {t("overview.flashcardsOpenMaterial")}
                 </p>
               </div>
               <LinkButton to="/app/materials" variant="ghost" className="shrink-0">

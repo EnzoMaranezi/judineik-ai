@@ -103,8 +103,8 @@ test("deleted-topic replay loads the original set and answers without requiring 
   assert.match(handler, /\.eq\("id", row\.question_set_id\)/);
   assert.match(handler, /answers: \(row\.answers/);
   assert.doesNotMatch(handler, /!inner|\.eq\("topic_id"|\.eq\("kind"|\.eq\("locale"/);
-  assert.match(replay, /data\.topicId \? \([\s\S]*to="\/app\/materials\/\$documentId\/topics\/\$topicId"/);
-  assert.match(replay, /\) : !data\.topicScopeId \? \(/);
+  assert.doesNotMatch(replay, /to="\/app\/materials\/\$documentId\/topics/);
+  assert.match(replay, /!data\.topicScopeId \? \(/);
   assert.match(replay, /questions=\{data\.questions\}[\s\S]*answers=\{data\.answers\}/);
 });
 

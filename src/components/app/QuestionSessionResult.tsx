@@ -45,7 +45,6 @@ function getQuestionPrompt(question: StudyQuestion) {
 /** Post-session performance screen: accuracy, classification and per-question review. */
 export function QuestionSessionResult({
   documentId,
-  topicId,
   questions,
   answers,
   saving = false,
@@ -197,24 +196,6 @@ export function QuestionSessionResult({
       ) : null}
 
       <div className="flex flex-wrap gap-3 border-t border-border pt-6">
-        {!saving && !saveError ? (
-          <Link
-            to="/app/plan"
-            search={{ documentId }}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-lime px-6 py-3 text-sm font-medium text-background transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-lime)]"
-          >
-            {t("results.seeAreas")} <span aria-hidden>→</span>
-          </Link>
-        ) : null}
-        {topicId ? (
-          <Link
-            to="/app/materials/$documentId/topics/$topicId"
-            params={{ documentId, topicId }}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-6 py-3 text-sm transition-colors hover:border-lime/40 hover:bg-surface-2"
-          >
-            {t("common.reviewMaterial")} <span aria-hidden>→</span>
-          </Link>
-        ) : (
           <Link
             to="/app/summary/$documentId"
             params={{ documentId }}
@@ -222,7 +203,6 @@ export function QuestionSessionResult({
           >
             {t("common.reviewMaterial")} <span aria-hidden>→</span>
           </Link>
-        )}
         {onNewSession ? (
           <GhostButton onClick={onNewSession} disabled={generationDisabled}>
             {t("results.newSession")} <span aria-hidden>→</span>

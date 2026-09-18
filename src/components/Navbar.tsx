@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 const NAV_LABEL_KEYS = [
   "landing.nav.product",
   "landing.nav.how",
-  "landing.nav.intelligence",
   "landing.nav.beta",
   "landing.nav.faq",
 ] as const;

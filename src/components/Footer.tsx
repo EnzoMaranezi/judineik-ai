@@ -4,7 +4,6 @@ import { useI18n } from "@/lib/i18n";
 const NAV_LABEL_KEYS = [
   "landing.nav.product",
   "landing.nav.how",
-  "landing.nav.intelligence",
   "landing.nav.beta",
   "landing.nav.faq",
 ] as const;

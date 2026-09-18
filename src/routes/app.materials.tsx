@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trash2, FileText, AlertCircle, Pencil, Check, X, BookOpen } from "lucide-react";
+import { Trash2, FileText, AlertCircle, Pencil, Check, X } from "lucide-react";
 import { AppCard, AppLabel, EmptyState, LinkButton, Skeleton } from "@/components/app/ui";
 import {
   AlertDialog,
@@ -218,14 +218,6 @@ function Materials() {
                         </Link>
                         <Link to="/app/flashcards/$documentId" params={{ documentId: doc.id }} className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-lime">
                           {t("materials.flashcards")} <span aria-hidden>→</span>
-                        </Link>
-                        <Link
-                          to="/app/materials/$documentId/topics"
-                          params={{ documentId: doc.id }}
-                          className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-lime"
-                        >
-                          <BookOpen className="size-3.5" aria-hidden />
-                          {t("materials.studyTopics")} <span aria-hidden>→</span>
                         </Link>
                       </div>
                     </div>

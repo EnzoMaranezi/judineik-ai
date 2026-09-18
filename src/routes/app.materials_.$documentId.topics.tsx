@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, FileText } from "lucide-react";
 import { AppCard, AppLabel, ErrorState, PrimaryButton, Skeleton } from "@/components/app/ui";
@@ -22,6 +22,7 @@ import { useI18n } from "@/lib/i18n";
 import { AiGenerationProgress } from "@/components/app/AiGenerationProgress";
 
 export const Route = createFileRoute("/app/materials_/$documentId/topics")({
+  beforeLoad: () => { throw notFound(); },
   component: DocumentTopicsPage,
 });
 

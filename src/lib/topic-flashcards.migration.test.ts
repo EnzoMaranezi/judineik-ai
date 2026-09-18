@@ -135,12 +135,11 @@ test("Topic Detail reuses the existing panel without introducing another generat
   assert.match(component, /DocumentFlashcardsPanel\(\{ documentId, topicId, canGenerate = true \}/u);
 });
 
-test("Overview loads topic metadata and navigates each scope correctly", () => {
+test("Overview preserves topic metadata internally but offers only document navigation", () => {
   assert.match(overviewFunctions, /topic_id[\s\S]*document_topics\(title\)/u);
-  assert.match(overviewRoute, /dueByScope\[0\]/u);
+  assert.match(overviewRoute, /documentReviews\[0\]/u);
   assert.match(overviewRoute, /to="\/app\/flashcards\/\$documentId"/u);
-  assert.match(overviewRoute, /to="\/app\/materials\/\$documentId\/topics\/\$topicId"/u);
-  assert.match(overviewRoute, /hash="flashcards"/u);
+  assert.doesNotMatch(overviewRoute, /to="\/app\/materials\/\$documentId\/topics\/\$topicId"/u);
 });
 
 test("spaced-repetition math and controlled review writes remain unchanged", () => {

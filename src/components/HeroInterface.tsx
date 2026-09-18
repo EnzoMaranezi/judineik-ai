@@ -12,7 +12,7 @@ export function HeroInterface() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        className="glass rounded-2xl p-5 sm:row-span-2"
+        className="glass rounded-2xl p-5"
       >
         <p className="label-mono">{t("landing.yourKnowledge")}</p>
         <div className="mt-6 space-y-5">
@@ -58,24 +58,6 @@ export function HeroInterface() {
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 1.4, ease: [0.16, 1, 0.3, 1] }}
-        className="glass rounded-2xl p-5"
-      >
-        <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-lime animate-pulse-dot" aria-hidden />
-          <p className="label-mono">{t("landing.agentActive")}</p>
-        </div>
-        <p className="mt-4 font-mono text-xs leading-relaxed text-muted-foreground">
-          {t("landing.detectedWeak")}
-          <br />
-          <span className="text-foreground">Fast Recovery → Reno</span>
-          <br />
-          {t("landing.schedulingReinforcement")}
-        </p>
-      </motion.div>
     </div>
   );
 }

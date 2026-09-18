@@ -9,13 +9,9 @@ import { Problem } from "@/components/Problem";
 import { Transformation } from "@/components/Transformation";
 import { FeatureBento } from "@/components/FeatureBento";
 import { NotChatbot } from "@/components/NotChatbot";
-import { Intelligence } from "@/components/Intelligence";
-import { KnowledgeGraph } from "@/components/KnowledgeGraph";
-import { Personalization } from "@/components/Personalization";
 import { Workflow } from "@/components/Workflow";
 import { StudySession } from "@/components/StudySession";
 import { Analytics } from "@/components/Analytics";
-import { DailyBriefing } from "@/components/DailyBriefing";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Pricing } from "@/components/Pricing";
 import { FAQ } from "@/components/FAQ";
@@ -78,13 +74,9 @@ function Index() {
         <Transformation />
         <FeatureBento />
         <NotChatbot />
-        <Intelligence />
-        <KnowledgeGraph />
-        <Personalization />
         <Workflow />
         <StudySession />
         <Analytics />
-        <DailyBriefing />
         <HowItWorks />
         <Pricing onStart={() => setWorkspace(true)} />
         <FAQ />

@@ -88,15 +88,7 @@ function SessionDetail() {
                   {t("materials.viewSummary")} <span aria-hidden>→</span>
                 </Link>
               ) : null}
-              {data.topicId ? (
-                <Link
-                  to="/app/materials/$documentId/topics/$topicId"
-                  params={{ documentId: data.documentId, topicId: data.topicId }}
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 font-mono text-xs text-muted-foreground transition-colors hover:border-lime/40 hover:text-foreground"
-                >
-                  {t("sessions.openTopic")} <span aria-hidden>→</span>
-                </Link>
-              ) : !data.topicScopeId ? (
+              {!data.topicScopeId ? (
                 <Link
                   to="/app/questions/$documentId"
                   params={{ documentId: data.documentId }}

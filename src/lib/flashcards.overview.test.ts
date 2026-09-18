@@ -213,13 +213,13 @@ test("same topic in another locale is excluded from the active locale", () => {
   assert.equal(overview.dueByScope[0]?.flashcardSetId, "pt-topic-a");
 });
 
-test("Overview refreshes on locale changes and Review now targets document and topic routes", () => {
+test("Overview refreshes on locale changes and Review now targets only document routes", () => {
   assert.match(overviewSource, /getFlashcardReviewOverview\(\)[\s\S]*\[locale\]/);
   assert.match(overviewSource, /to="\/app\/flashcards\/\$documentId"/);
   assert.match(overviewSource, /params=\{\{ documentId: primary\.documentId \}\}/);
-  assert.match(overviewSource, /to="\/app\/materials\/\$documentId\/topics\/\$topicId"/);
-  assert.match(overviewSource, /topicId: primary\.topicId/);
-  assert.match(overviewSource, /hash="flashcards"/);
+  assert.doesNotMatch(overviewSource, /to="\/app\/materials\/\$documentId\/topics/);
+  assert.match(overviewSource, /dueByScope\.filter\(\(scope\) => scope\.topicId === null\)/);
+  assert.match(overviewSource, /documentReviews\.reduce\(\(total, scope\) => total \+ scope\.dueCount, 0\)/);
 });
 
 test("Overview due retrieval has no AI provider or quota side effects", () => {

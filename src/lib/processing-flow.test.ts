@@ -17,11 +17,11 @@ test("Processing shows only localized stages backed by the real study-analysis f
   assert.equal(i18nSource.match(/"processing\.stage\.finalizing"/g)?.length, 2);
 });
 
-test("a successful Processing flow stores the analysis and opens the current document plan", () => {
+test("a successful Processing flow stores the analysis and opens document Summary", () => {
   assert.match(processingRoute, /storageService\.setAnalysis\(analysis\)/);
   assert.match(
     processingRoute,
-    /navigate\(\{ to: "\/app\/plan", search: \{ documentId: input\.documentId \} \}\)/,
+    /navigate\(\{ to: "\/app\/summary\/\$documentId", params: \{ documentId: input\.documentId \} \}\)/,
   );
 });
 
@@ -29,7 +29,7 @@ test("Processing does not wait on artificial route or analysis timers before nav
   assert.doesNotMatch(processingRoute, /setTimeout|setInterval/);
   assert.match(
     processingRoute,
-    /navigate\(\{ to: "\/app\/plan", search: \{ documentId: input\.documentId \} \}\)/,
+    /navigate\(\{ to: "\/app\/summary\/\$documentId", params: \{ documentId: input\.documentId \} \}\)/,
   );
   assert.doesNotMatch(aiService, /export async function analyzeMaterial[\s\S]*?await delay\(600\)/);
 });

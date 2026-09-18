@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { AppCard, AppLabel, EmptyState, LinkButton, ProgressBar } from "@/components/app/ui";
@@ -16,6 +16,7 @@ import {
 } from "@/lib/study-topics-plan";
 
 export const Route = createFileRoute("/app/plan")({
+  beforeLoad: () => { throw notFound(); },
   validateSearch: (search: Record<string, unknown>) => ({
     documentId: typeof search["documentId"] === "string" ? search["documentId"] : undefined,
   }),
