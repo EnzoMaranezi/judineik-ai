@@ -274,7 +274,9 @@ export const discoverDocumentTopics = createServerFn({ method: "POST" })
         persist: async (generated) => {
           let parsed;
           try {
-            parsed = parseTopicDiscoveryResponse(generated.text, source, segments);
+            parsed = parseTopicDiscoveryResponse(generated.text, source, segments, (diagnostic) => {
+              console.warn("[topic-discovery-parser]", JSON.stringify(diagnostic));
+            });
           } catch (error) {
             throw normalizeTopicError(error);
           }

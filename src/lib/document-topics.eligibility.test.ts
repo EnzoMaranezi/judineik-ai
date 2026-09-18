@@ -107,7 +107,8 @@ const { discoverDocumentTopics } = await import("./document-topics.functions.ts"
 const { state } = await import(stubUrl) as { state: { output: string; reservations: number; providers: number; finalStatuses: string[] } };
 hooks.deregister();
 
-test("real Discovery handler rejects an impossible 600-character partition before RPC/payload persistence, without retry", async () => {
+test("real Discovery handler logs safe rejection diagnostics before sanitizing, without persistence/retry/quota changes", async (t) => {
+  const warnings = t.mock.method(console, "warn", () => {});
   const source = ["# A\n" + "a".repeat(199), "# B\n" + "b".repeat(198), "# C\n" + "c".repeat(197)].join("\n\n");
   assert.equal(countTopicSourceCharacters(source), 600);
   const segments = segmentDocumentSource(source);
@@ -136,6 +137,31 @@ test("real Discovery handler rejects an impossible 600-character partition befor
   assert.equal(state.reservations, 1);
   assert.equal(state.providers, 1);
   assert.deepEqual(state.finalStatuses, ["succeeded"]);
+  assert.deepEqual(warnings.mock.calls.map(call => call.arguments), [[
+    "[topic-discovery-parser]",
+    JSON.stringify({
+      errorCode: "TOPIC_SOURCE_TOO_SHORT", category: "grounding",
+      totalSegmentCount: 3, assignedSegmentCount: 3, proposedTopicCount: 3,
+      topicIndex: 2, topicSegmentCount: 1, topicSourceCharacters: 199, minimumSourceCharacters: 200,
+    }),
+  ]]);
+  const logged = JSON.stringify(warnings.mock.calls.map(call => call.arguments));
+  for (const privateValue of [source, state.output, documentId, userId, "Synthetic material",
+    "Processes", "Scheduling", "Synchronization", "An academic description of this assigned source topic."]) {
+    assert.ok(!logged.includes(privateValue));
+  }
+  state.output = "PRIVATE_RAW_PROVIDER_OUTPUT";
+  state.reservations = 0; state.providers = 0; state.finalStatuses = [];
+  await assert.rejects(discover({ data: { documentId }, context: { supabase, userId } }),
+    /^Error: TOPIC_OUTPUT_INVALID$/);
+  assert.deepEqual(warnings.mock.calls[1]!.arguments, ["[topic-discovery-parser]", JSON.stringify({
+    errorCode: "MALFORMED_TOPIC_OUTPUT", category: "json", totalSegmentCount: 3, assignedSegmentCount: 0,
+  })]);
+  assert.equal(warnings.mock.calls.length, 2);
+  assert.equal(persistenceCalls, 0);
+  assert.equal(state.reservations, 1);
+  assert.equal(state.providers, 1);
+  assert.deepEqual(state.finalStatuses, ["succeeded"]);
   extractedText = source.replace("a", "");
   state.reservations = 0; state.providers = 0; state.finalStatuses = [];
   await assert.rejects(discover({ data: { documentId }, context: { supabase, userId } }), /^Error: TOPIC_SOURCE_INSUFFICIENT$/);
@@ -143,4 +169,5 @@ test("real Discovery handler rejects an impossible 600-character partition befor
   assert.equal(state.providers, 0);
   assert.equal(persistenceCalls, 0);
   assert.deepEqual(state.finalStatuses, []);
+  assert.equal(warnings.mock.calls.length, 2);
 });

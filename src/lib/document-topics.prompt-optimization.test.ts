@@ -52,7 +52,7 @@ test("topic discovery generation config is explicit without changing segmentatio
   assert.match(topicFunctions, /languageInstructionPlacement: "prompt-only"/u);
   assert.match(topicFunctions, /languageInstructionFormat: "instruction-only"/u);
   assert.match(topicFunctions, /const segments = validateDiscoverableSource\(source\)/u);
-  assert.match(topicFunctions, /parseTopicDiscoveryResponse\(generated\.text, source, segments\)/u);
+  assert.match(topicFunctions, /parseTopicDiscoveryResponse\(generated\.text, source, segments, \(diagnostic\) =>/u);
   assert.match(topicFunctions, /supabase\.rpc\("create_document_topics"/u);
 });
 
