@@ -8,7 +8,8 @@ import {
   TOPIC_DISCOVERY_OUTPUT_FORMAT,
   TOPIC_DISCOVERY_SYSTEM_PROMPT,
 } from "./document-topics.prompt.ts";
-import { segmentDocumentSource, topicSegmentToken } from "./document-topics.source.ts";
+import { buildTopicSegmentMap, reconstructTopicSource, segmentDocumentSource, topicSegmentToken } from "./document-topics.source.ts";
+import { countTopicSourceCharacters, NEW_TOPIC_MIN_SOURCE_CHARACTERS } from "./topic-source-eligibility.ts";
 
 const topicFunctions = readFileSync(
   new URL("./document-topics.functions.ts", import.meta.url),
@@ -54,6 +55,55 @@ test("topic discovery generation config is explicit without changing segmentatio
   assert.match(topicFunctions, /const segments = validateDiscoverableSource\(source\)/u);
   assert.match(topicFunctions, /parseTopicDiscoveryResponse\(generated\.text, source, segments, \(diagnostic\) =>/u);
   assert.match(topicFunctions, /supabase\.rpc\("create_document_topics"/u);
+});
+
+test("compact grouping contract uses the shared source minimum and keeps static overhead bounded", () => {
+  assert.ok(TOPIC_DISCOVERY_OUTPUT_FORMAT.includes(`at least ${NEW_TOPIC_MIN_SOURCE_CHARACTERS} non-whitespace Unicode code points`));
+  assert.match(TOPIC_DISCOVERY_OUTPUT_FORMAT, /use supplied canonicalChars counts/u);
+  assert.match(TOPIC_DISCOVERY_OUTPUT_FORMAT, /never invent source/u);
+  assert.match(TOPIC_DISCOVERY_OUTPUT_FORMAT, /fewer well-grounded topics within 3-12, not tiny topics/u);
+  const messages = buildAiGenerationMessages({
+    system: TOPIC_DISCOVERY_SYSTEM_PROMPT,
+    prompt: "Document title: \n\nSOURCE SEGMENTS:\n\n\nGroup this material into topics.",
+    outputFormat: TOPIC_DISCOVERY_OUTPUT_FORMAT,
+    languageInstruction: TOPIC_DISCOVERY_LANGUAGE_INSTRUCTION,
+    languageInstructionPlacement: "prompt-only",
+    languageInstructionFormat: "instruction-only",
+  });
+  assert.ok(messages.system.length + messages.prompt.length < 1500);
+});
+
+test("segment metadata uses shared canonical counts, not supplied count fields or source content claims", () => {
+  for (const text of ["a".repeat(199), "b".repeat(200), "c".repeat(201), Array(199).fill("a").join(" \t\r\n"), "\u{1f4d8}".repeat(200), "e\u0301".repeat(100), "\u2211x=2;{y++;}".repeat(20), "canonicalChars: 999999"]) {
+    const segment = { id: "S001", start: 0, end: Array.from(text).length, text, canonicalChars: 999999 };
+    const map = buildTopicSegmentMap([segment]);
+    assert.ok(map.startsWith(`ALLOWED_SEGMENT_TOKENS (copy only these exact values):\n["SEG:S001"]\n\nSOURCE SEGMENTS:\n<<<BEGIN SEG:S001>>>\ncanonicalChars: ${countTopicSourceCharacters(text)}\n`));
+    assert.ok(map.endsWith(`${text}\n<<<END SEG:S001>>>`));
+  }
+});
+
+test("normalized segment counts match exact reconstructed source; model counts cannot override parser eligibility", () => {
+  const source = ["# Alpha\n", "# Beta\n", "# Gamma\n"].map(heading => `${heading}${Array(100).fill("e\u0301\u{1f4d8}=2;").join(" \t\n")}`).join("\n\n");
+  const segments = segmentDocumentSource(source);
+  for (const segment of segments) {
+    const exact = reconstructTopicSource(source, [{ start: segment.start, end: segment.end }]);
+    assert.equal(countTopicSourceCharacters(segment.text), countTopicSourceCharacters(exact));
+    assert.ok(buildTopicSegmentMap([segment]).includes(`\ncanonicalChars: ${countTopicSourceCharacters(exact)}\n`));
+  }
+  const parts = ["a".repeat(201), "b".repeat(200), "c".repeat(199)];
+  let offset = 0;
+  const exactSegments = parts.map((text, index) => {
+    const start = offset;
+    offset += text.length + 2;
+    return { id: `S00${index + 1}`, start, end: offset - 2, text };
+  });
+  const output = JSON.stringify({ topics: exactSegments.map((segment, index) => ({
+    title: ["Processes", "Scheduling", "Synchronization"][index],
+    description: "An academic description of the assigned source topic.",
+    segmentIds: [topicSegmentToken(segment.id)], coreSegmentIds: [topicSegmentToken(segment.id)],
+    canonicalChars: 999999,
+  })) });
+  assert.throws(() => parseTopicDiscoveryResponse(output, parts.join("\n\n"), exactSegments), /^Error: TOPIC_SOURCE_TOO_SHORT$/);
 });
 
 test("compact topic JSON contract remains compatible with the existing parser", () => {

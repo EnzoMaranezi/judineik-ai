@@ -1,3 +1,5 @@
+import { countTopicSourceCharacters } from "./topic-source-eligibility.ts";
+
 export type TopicSourceRange = {
   start: number;
   end: number;
@@ -221,7 +223,7 @@ export function buildTopicSegmentMap(segments: TopicSourceSegment[]) {
   const sourceSegments = segments
     .map((segment, index) => {
       const token = tokens[index];
-      return `<<<BEGIN ${token}>>>\n${segment.text}\n<<<END ${token}>>>`;
+      return `<<<BEGIN ${token}>>>\ncanonicalChars: ${countTopicSourceCharacters(segment.text)}\n${segment.text}\n<<<END ${token}>>>`;
     })
     .join("\n\n");
   return `ALLOWED_SEGMENT_TOKENS (copy only these exact values):\n${JSON.stringify(tokens)}\n\nSOURCE SEGMENTS:\n${sourceSegments}`;

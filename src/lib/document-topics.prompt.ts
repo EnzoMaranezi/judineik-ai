@@ -1,3 +1,5 @@
+import { NEW_TOPIC_MIN_SOURCE_CHARACTERS } from "./topic-source-eligibility.ts";
+
 export const TOPIC_DISCOVERY_SYSTEM_PROMPT = `You are NEXA. Split one source document into 3-12 useful academic study topics.
 Use only the supplied source segments and exact SEG:S### tokens.
 Write titles and descriptions in the source material's language.
@@ -11,6 +13,8 @@ Rules:
 - copy every supplied SEG:S### token exactly once across segmentIds;
 - use no other segment tokens;
 - coreSegmentIds must be non-empty and a subset of that topic's segmentIds;
+- use supplied canonicalChars counts to assign enough segments for each topic's reconstructed source to contain at least ${NEW_TOPIC_MIN_SOURCE_CHARACTERS} non-whitespace Unicode code points; never invent source;
+- prefer fewer well-grounded topics within 3-12, not tiny topics to reach a count;
 - keep topics in source order.`;
 
 export const TOPIC_DISCOVERY_LANGUAGE_INSTRUCTION =
