@@ -6,7 +6,7 @@ const gateway = readFileSync(new URL("./ai-gateway.server.ts", import.meta.url),
 const providerConfig = readFileSync(new URL("./ai-provider-config.ts", import.meta.url), "utf8");
 
 test("the production gateway has a bounded provider budget and no hidden SDK retries", () => {
-  assert.match(providerConfig, /const NVIDIA_PRIMARY_TIMEOUT_MS = 45_000/);
+  assert.match(providerConfig, /const NVIDIA_PRIMARY_TIMEOUT_MS = 60_000/);
   assert.match(providerConfig, /const OPENROUTER_PROVIDER_TIMEOUT_MS = 60_000/);
   assert.match(gateway, /const AI_SDK_MAX_RETRIES = 0/);
   assert.match(gateway, /maxRetries: AI_SDK_MAX_RETRIES/);
