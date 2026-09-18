@@ -105,6 +105,19 @@ async function loadTopics(supabase: SupabaseClient<Database>, documentId: string
   return (data ?? []).map(mapTopic);
 }
 
+async function studyableTopics(topics: StoredDocumentTopic[], source: string | null) {
+  const visible: StoredDocumentTopic[] = [];
+  for (const topic of topics) {
+    const verifiedSource = await reconstructVerifiedTopicSource({
+      source,
+      sourceRanges: topic.sourceRanges,
+      sourceHash: topic.sourceHash,
+    });
+    if (evaluateTopicSourceEligibility(verifiedSource).meetsNewTopicMinimum) visible.push(topic);
+  }
+  return visible;
+}
+
 function validateDiscoverableSource(source: string | null) {
   if (!source || !source.trim()) throw new Error(TOPIC_SOURCE_UNAVAILABLE);
   const sourceLength = Array.from(source).length;
@@ -199,10 +212,12 @@ export const getDocumentTopics = createServerFn({ method: "POST" })
       else if (message === TOPIC_SOURCE_TOO_LARGE) sourceState = "too_large";
       else sourceState = "insufficient";
     }
+    const visibleTopics = await studyableTopics(topics, source);
+    if (topics.length > 0 && visibleTopics.length === 0) sourceState = "insufficient";
     return {
       document: { id: document.id, title: document.title },
       sourceState,
-      topics,
+      topics: visibleTopics,
     };
   });
 
@@ -223,7 +238,8 @@ export const getDocumentTopic = createServerFn({ method: "POST" })
       sourceRanges: topic.sourceRanges,
       sourceHash: topic.sourceHash,
     });
-    const { summary, questions, flashcards } = evaluateTopicSourceEligibility(source);
+    const { summary, questions, flashcards, meetsNewTopicMinimum } = evaluateTopicSourceEligibility(source);
+    if (!meetsNewTopicMinimum) throw new Error(TOPIC_SOURCE_UNAVAILABLE);
     return {
       document: { id: document.id, title: document.title },
       topic,
@@ -242,7 +258,8 @@ export const waitForDocumentTopics = createServerFn({ method: "POST" })
     const sourceHash = await hashTopicSource(source);
     const topics = await waitForTopics(context.supabase, document.id, sourceHash);
     if (!topics) throw new Error("AI_GENERATION_IN_PROGRESS");
-    return { document: { id: document.id, title: document.title }, topics };
+    const visibleTopics = await studyableTopics(topics, source);
+    return { document: { id: document.id, title: document.title }, topics: visibleTopics, sourceState: visibleTopics.length ? "ready" as const : "insufficient" as const };
   });
 
 export const discoverDocumentTopics = createServerFn({ method: "POST" })
@@ -297,7 +314,8 @@ export const discoverDocumentTopics = createServerFn({ method: "POST" })
         isGenerationInProgress: isAiGenerationInProgressError,
         waitForCached: () => loadCurrentTopics(supabase, document.id, sourceHash),
       });
-      return { reused: result.reused, document: { id: document.id, title: document.title }, topics: result.value };
+      const visibleTopics = await studyableTopics(result.value, source);
+      return { reused: result.reused, document: { id: document.id, title: document.title }, topics: visibleTopics, sourceState: visibleTopics.length ? "ready" as const : "insufficient" as const };
     } catch (error) {
       if (isAiDailyLimitError(error)) throw error;
       if (isAiGenerationInProgressError(error)) throw new Error("AI_GENERATION_IN_PROGRESS");

@@ -70,14 +70,14 @@ function DocumentTopicsPage() {
     setError(null);
     try {
       const result = await discoverDocumentTopics({ data: { documentId } });
-      setState({ document: result.document, sourceState: "ready", topics: result.topics });
+      setState({ document: result.document, sourceState: result.sourceState, topics: result.topics });
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "";
       if (message.includes(AI_GENERATION_IN_PROGRESS)) {
         setWaiting(true);
         try {
           const result = await waitForDocumentTopics({ data: { documentId } });
-          setState({ document: result.document, sourceState: "ready", topics: result.topics });
+          setState({ document: result.document, sourceState: result.sourceState, topics: result.topics });
         } catch (waitCause) {
           setError(localizedError(waitCause, t));
         } finally {

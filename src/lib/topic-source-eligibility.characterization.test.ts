@@ -49,7 +49,7 @@ const userId = "11111111-1111-4111-8111-111111111111";
 const documentId = "22222222-2222-4222-8222-222222222222";
 const topicId = "33333333-3333-4333-8333-333333333333";
 
-async function inputFor(source: string, options: { sourceHash?: string; sourceRanges?: { start: number; end: number }[]; savedContent?: boolean; savedLocale?: string; owner?: string; missingTopic?: boolean } = {}) {
+async function inputFor(source: string, options: { topicLengths?: number[]; sourceHash?: string; sourceRanges?: { start: number; end: number }[]; savedContent?: boolean; savedLocale?: string; owner?: string; missingTopic?: boolean } = {}) {
   const document = { id: documentId, user_id: options.owner ?? userId, title: "Synthetic source", extracted_text: source };
   const topic = {
     id: topicId, user_id: userId, document_id: documentId, title: "Synthetic topic",
@@ -58,6 +58,14 @@ async function inputFor(source: string, options: { sourceHash?: string; sourceRa
     description: "Synthetic topic description", position: 1, discovery_model: null, created_at: "2026-01-01T00:00:00Z",
   };
   const topics = options.missingTopic ? [] : [topic, ...[2, 3].map((position) => ({ ...topic, id: `00000000-0000-4000-8000-00000000000${position}`, position }))];
+  if (options.topicLengths) {
+    let start = 0;
+    topics.forEach((row, index) => {
+      const end = start + options.topicLengths![index]!;
+      row.source_ranges = [{ start, end }];
+      start = end;
+    });
+  }
   const set = { id: "saved-set", document_id: documentId, topic_id: topicId, topic_scope_id: topicId, locale: options.savedLocale ?? "en", created_at: topic.created_at, updated_at: topic.created_at, model: null };
   const savedRows: Record<string, Row[]> = options.savedContent ? {
     summaries: [{ ...set, content: { marker: "saved summary" } }],
@@ -69,6 +77,9 @@ async function inputFor(source: string, options: { sourceHash?: string; sourceRa
     from(table: string) {
       let rows: Row[] = table === "documents" ? [document] : table === "document_topics" ? topics : savedRows[table] ?? [];
       const query = {
+        insert() { throw new Error("Unexpected persistence mutation"); },
+        update() { throw new Error("Unexpected persistence mutation"); },
+        delete() { throw new Error("Unexpected persistence mutation"); },
         select() { return query; },
         eq(field: string, value: unknown) { rows = rows.filter((row) => row[field] === value); return query; },
         is(field: string, value: unknown) { return query.eq(field, value); },
@@ -87,7 +98,7 @@ type ReadHandler = (input: Awaited<ReturnType<typeof inputFor>>) => Promise<{ cu
 const { getDocumentQuestions, generateDocumentQuestions } = await import("./questions.functions.ts");
 const { getDocumentFlashcards, generateDocumentFlashcards } = await import("./flashcards.functions.ts");
 const { getDocumentSummary } = await import("./summaries.functions.ts");
-const { getDocumentTopic } = await import("./document-topics.functions.ts");
+const { getDocumentTopic, getDocumentTopics, discoverDocumentTopics } = await import("./document-topics.functions.ts");
 hooks.deregister();
 const readQuestions = getDocumentQuestions as unknown as ReadHandler;
 const readFlashcards = getDocumentFlashcards as unknown as ReadHandler;
@@ -107,6 +118,55 @@ test("shared reconstruction uses the canonical 80-code-point Summary baseline", 
   await assert.rejects(reconstruct(supplementary), /TOPIC_SOURCE_UNAVAILABLE/);
   assert.equal(countTopicSourceCharacters(await reconstruct("\u{1f4d8}".repeat(80))), 80);
   await assert.rejects(reconstruct(Array(79).fill("a").join(" \t\n")), /TOPIC_SOURCE_UNAVAILABLE/);
+});
+
+const readTopics = getDocumentTopics as unknown as (input: Awaited<ReturnType<typeof inputFor>>) => Promise<{ topics: { id: string; position: number }[]; sourceState: string }>;
+
+for (const length of [199, 200, 201]) {
+  test(`studyable visibility uses the verified canonical ${length}-character boundary without writes, quota or providers`, async () => {
+    const input = await inputFor("a".repeat(length));
+    const before = await input.context.supabase.from("document_topics").select();
+    const result = await readTopics(input);
+    assert.equal(result.topics.length, length < 200 ? 0 : 3);
+    if (length < 200) {
+      assert.equal(result.sourceState, "insufficient");
+      await assert.rejects(readTopic(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
+    } else {
+      assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: true, flashcards: true });
+    }
+    assert.deepEqual(await input.context.supabase.from("document_topics").select(), before);
+  });
+}
+
+test("mixed saved 120/200/350 topics expose only studyable choices without changing persisted rows", async () => {
+  const input = await inputFor("a".repeat(670), { topicLengths: [120, 200, 350] });
+  const result = await readTopics(input);
+  assert.deepEqual(result.topics.map(topic => topic.position), [2, 3]);
+  assert.equal((await input.context.supabase.from("document_topics").select()).data.length, 3);
+  for (const topic of result.topics) {
+    assert.deepEqual((await readTopic({ ...input, data: { ...input.data, topicId: topic.id } })).capabilities, { summary: true, questions: true, flashcards: true });
+  }
+});
+
+test("all-small saved topics use insufficient recovery without automatic generation; integrity is checked before filtering", async () => {
+  const input = await inputFor("a".repeat(360), { topicLengths: [120, 120, 120] });
+  assert.deepEqual((await readTopics(input)).topics, []);
+  assert.equal((await readTopics(input)).sourceState, "insufficient");
+  await assert.rejects(readTopics(await inputFor("a".repeat(199), { sourceRanges: [{ start: 0, end: 200 }] })), /INVALID_TOPIC_SOURCE_RANGE/);
+  await assert.rejects(readTopics(await inputFor("a".repeat(199), { sourceHash: "0".repeat(64) })), /STALE_TOPIC_SOURCE/);
+  assert.equal((await readTopics(await inputFor(Array(199).fill("\u{1f4d8}").join(" \t\n")))).topics.length, 0);
+});
+
+test("write-once Discovery cache reuses all-small legacy rows without providers, reservations or persistence", async () => {
+  const source = ["Alpha", "Beta", "Gamma"].map(title => `# ${title}\n${"a".repeat(250)}`).join("\n\n");
+  const input = await inputFor(source, { topicLengths: [120, 120, 120] });
+  const before = await input.context.supabase.from("document_topics").select();
+  const discover = discoverDocumentTopics as unknown as (request: typeof input) => Promise<{ reused: boolean; topics: unknown[]; sourceState: string }>;
+  const result = await discover(input);
+  assert.equal(result.reused, true);
+  assert.deepEqual(result.topics, []);
+  assert.equal(result.sourceState, "insufficient");
+  assert.deepEqual(await input.context.supabase.from("document_topics").select(), before);
 });
 
 test("Topic Questions requires 200 non-whitespace code points, not UTF-16 units", async () => {
@@ -141,7 +201,8 @@ for (const length of [79, 80, 199, 200]) {
       assert.equal((await readSummary(input)).current, null);
       assert.equal((await readQuestions(input)).current, null);
       assert.equal((await readFlashcards(input)).current, null);
-      assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: length >= 200, flashcards: length >= 200 });
+      if (length < 200) await assert.rejects(readTopic(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
+      else assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: true, flashcards: true });
     }
   });
 }
@@ -149,7 +210,7 @@ for (const length of [79, 80, 199, 200]) {
 test("199 canonical characters plus heavy internal whitespace remain Summary-only", async () => {
   const input = await inputFor(` \t${Array(199).fill("a").join(" \t\r\n".repeat(20))}\r\n `);
   assert.equal((await readSummary(input)).current, null);
-  assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: false, flashcards: false });
+  await assert.rejects(readTopic(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
   await assert.rejects(generateQuestions(input), /^Error: TOPIC_QUESTION_SOURCE_INSUFFICIENT$/);
   await assert.rejects(generateFlashcards(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
 });
@@ -163,8 +224,9 @@ test("integrity errors precede capability errors in every topic read handler", a
 
 test("topic capabilities use code points and expose no reconstructed source", async () => {
   await assert.rejects(readTopic(await inputFor("\u{1f4d8}".repeat(79))), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
-  const result = await readTopic(await inputFor("\u{1f4d8}".repeat(100)));
-  assert.deepEqual(result.capabilities, { summary: true, questions: false, flashcards: false });
+  await assert.rejects(readTopic(await inputFor("\u{1f4d8}".repeat(100))), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
+  const result = await readTopic(await inputFor("\u{1f4d8}".repeat(200)));
+  assert.deepEqual(result.capabilities, { summary: true, questions: true, flashcards: true });
   assert.deepEqual(Object.keys(result).sort(), ["capabilities", "document", "topic"]);
   assert.deepEqual((await readTopic(await inputFor("\u{1f4d8}".repeat(200)))).capabilities, { summary: true, questions: true, flashcards: true });
 });
@@ -172,7 +234,7 @@ test("topic capabilities use code points and expose no reconstructed source", as
 test("legacy saved Summary, Questions and Flashcards remain readable without generation", async () => {
   for (const length of [80, 199]) {
     const input = await inputFor("a".repeat(length), { savedContent: true });
-    assert.deepEqual((await readTopic(input)).capabilities, { summary: true, questions: false, flashcards: false });
+    await assert.rejects(readTopic(input), /^Error: TOPIC_SOURCE_UNAVAILABLE$/);
     for (const read of [readSummary, readQuestions, readFlashcards]) {
       assert.ok((await read(input)).current);
     }
