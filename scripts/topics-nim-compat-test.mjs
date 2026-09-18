@@ -96,9 +96,11 @@ async function runFixture(fixture) {
   const segments = segmentDocumentSource(fixture.source);
   const messages = buildAiGenerationMessages({
     system: TOPIC_DISCOVERY_SYSTEM_PROMPT,
-    prompt: `Document title: ${fixture.title}\n\nSOURCE SEGMENT TOKEN MAP:\n${buildTopicSegmentMap(segments)}\n\nUse only ALLOWED_SEGMENT_TOKENS and group this material into topics now.`,
+    prompt: `Document title: ${fixture.title}\n\nROWS:\n${buildTopicSegmentMap(segments)}`,
     outputFormat: TOPIC_DISCOVERY_OUTPUT_FORMAT,
     languageInstruction: TOPIC_DISCOVERY_LANGUAGE_INSTRUCTION,
+    languageInstructionPlacement: "prompt-only",
+    languageInstructionFormat: "instruction-only",
   });
   const startedAt = performance.now();
   const response = await fetch(endpoint, {

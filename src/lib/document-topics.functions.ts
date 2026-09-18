@@ -280,7 +280,7 @@ export const discoverDocumentTopics = createServerFn({ method: "POST" })
         generate: () =>
           generateAiText({
             system: TOPIC_DISCOVERY_SYSTEM_PROMPT,
-            prompt: `Document title: ${document.title}\n\nSOURCE SEGMENTS:\n${buildTopicSegmentMap(segments)}\n\nGroup this material into topics.`,
+            prompt: `Document title: ${document.title}\n\nROWS:\n${buildTopicSegmentMap(segments)}`,
             outputFormat: TOPIC_DISCOVERY_OUTPUT_FORMAT,
             languageInstruction: TOPIC_DISCOVERY_LANGUAGE_INSTRUCTION,
             languageInstructionPlacement: "prompt-only",

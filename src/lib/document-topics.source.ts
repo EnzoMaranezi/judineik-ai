@@ -219,12 +219,9 @@ export function topicSegmentToken(segmentId: string) {
 }
 
 export function buildTopicSegmentMap(segments: TopicSourceSegment[]) {
-  const tokens = segments.map((segment) => topicSegmentToken(segment.id));
-  const sourceSegments = segments
-    .map((segment, index) => {
-      const token = tokens[index];
-      return `<<<BEGIN ${token}>>>\ncanonicalChars: ${countTopicSourceCharacters(segment.text)}\n${segment.text}\n<<<END ${token}>>>`;
-    })
-    .join("\n\n");
-  return `ALLOWED_SEGMENT_TOKENS (copy only these exact values):\n${JSON.stringify(tokens)}\n\nSOURCE SEGMENTS:\n${sourceSegments}`;
+  return JSON.stringify(segments.map((segment) => [
+    topicSegmentToken(segment.id),
+    countTopicSourceCharacters(segment.text),
+    segment.text,
+  ]));
 }

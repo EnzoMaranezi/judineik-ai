@@ -35,17 +35,18 @@ test("production and compatibility paths use the reviewed prompts for every prov
 });
 
 test("topic discovery separates exact coverage from instructional topic evidence", () => {
-  assert.match(TOPIC_DISCOVERY_SYSTEM_PROMPT, /Split one source document into 3-12/u);
+  assert.match(TOPIC_DISCOVERY_SYSTEM_PROMPT, /coherent academic study topics/u);
+  assert.match(TOPIC_DISCOVERY_OUTPUT_FORMAT, /3-12 distinct topics/u);
   assert.match(
     TOPIC_DISCOVERY_SYSTEM_PROMPT,
-    /Attach non-instructional segments to the nearest academic topic in segmentIds, but exclude them from coreSegmentIds/u,
+    /assign them to the nearest topic but exclude them from coreSegmentIds/u,
   );
   assert.match(
     TOPIC_DISCOVERY_SYSTEM_PROMPT,
-    /Do not create topics from bibliography, citations, URLs, authors, publishers, institutions, filenames, page numbers, or other metadata/u,
+    /References\/metadata are not topics unless taught/u,
   );
   assert.match(TOPIC_DISCOVERY_OUTPUT_FORMAT, /"coreSegmentIds"/u);
-  assert.match(TOPIC_DISCOVERY_OUTPUT_FORMAT, /coreSegmentIds must be non-empty and a subset/u);
+  assert.match(TOPIC_DISCOVERY_OUTPUT_FORMAT, /coreSegmentIds: unique, non-empty subset/u);
 });
 
 test("question contracts reject documentary recall while preserving contextual relevance", () => {
