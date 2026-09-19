@@ -1,39 +1,62 @@
 # Judineik AI
 
-Plataforma de estudos com IA que transforma materiais acadêmicos em resumos, questões, flashcards e revisões espaçadas.
+Plataforma de estudos com IA que transforma materiais acadêmicos em resumos, questões e flashcards, mantendo todo o conteúdo conectado ao material original.
 
-**Status: Beta - v0.1.0**
+[**Acessar aplicação**](https://nexaai-gamma.vercel.app/)
 
-[Acessar a aplicação pública atual](https://nexaai-gamma.vercel.app)
+> Projeto desenvolvido como aplicação full-stack para explorar geração de conteúdo com IA, autenticação, persistência de dados, segurança, quotas de uso e experiência de estudo.
 
-O link acima aponta para o deployment público atual do Judineik AI. Forks e instalações locais devem configurar sua própria URL e infraestrutura.
+<!-- Adicionar aqui uma screenshot da aplicação -->
+<!-- ![Judineik AI](./docs/judineik-preview.png) -->
 
-## Sobre o Judineik AI
+## Sobre o projeto
 
-O Judineik AI organiza materiais acadêmicos em uma experiência de estudo contínua. Depois de enviar um PDF ou colar anotações, o estudante pode gerar conteúdo contextual, praticar com questões, revisar flashcards e acompanhar sua evolução sem perder o vínculo com o material original.
+O Judineik AI transforma materiais acadêmicos em uma experiência de estudo interativa.
 
-## Funcionalidades
+O usuário pode enviar um PDF ou adicionar anotações, gerar um resumo do conteúdo, praticar com questões, revisar flashcards e acompanhar seu desempenho ao longo das sessões de estudo.
+
+O projeto foi desenvolvido com foco não apenas na integração com modelos de IA, mas também na infraestrutura necessária para uma aplicação real: autenticação, armazenamento privado, isolamento de dados por usuário, controle de quota, persistência do conteúdo gerado e fallback entre provedores de IA.
+
+## Principais funcionalidades
 
 - Autenticação, recuperação de senha e rotas protegidas com Supabase Auth.
-- Upload de PDF e materiais persistentes a partir de notas coladas.
-- Resumo, questões e flashcards para o material completo.
-- Practice My Mistakes para praticar erros anteriores.
+- Upload e processamento de documentos PDF.
+- Criação de materiais a partir de texto.
+- Geração de resumos contextualizados.
+- Geração de questões de múltipla escolha.
+- Practice My Mistakes para gerar novas questões com base nos erros anteriores.
 - Flashcards com revisão espaçada e histórico de revisões.
 - Overview, Progress e histórico de Study Sessions com dados reais.
+- Renderização de Markdown e expressões matemáticas.
 - Interface e conteúdo gerado em português brasileiro e inglês.
-- Feedback de progresso para gerações de IA de longa duração.
+- Feedback visual durante gerações de IA de longa duração.
+- Controle diário de uso de IA por usuário e proteção adicional contra abuso.
 
 ## Como funciona
 
 ```text
-PDF
-  -> processamento
-  -> resumo
-  -> questões
-  -> flashcards
+Material
+   |
+   +-- PDF
+   |     |
+   |     -> extração de texto
+   |
+   +-- Texto
+         |
+         -> conteúdo persistido
+                |
+                +--> Resumo
+                |
+                +--> Questões
+                |
+                +--> Flashcards
+                         |
+                         -> Revisão espaçada
 ```
 
-O processamento prepara o material e identifica sua estrutura; ele não gera perguntas. O material persistido é a fonte de verdade para o conteúdo gerado. Resumos, questões e flashcards existentes são reutilizados quando possível.
+O material processado é persistido e funciona como fonte para as gerações seguintes.
+
+Resumos, questões e flashcards já existentes são reutilizados quando possível, evitando novas chamadas de IA desnecessárias.
 
 ## Arquitetura
 
@@ -53,37 +76,88 @@ O processamento prepara o material e identifica sua estrutura; ele não gera per
 - Row Level Security (RLS)
 - Server Functions do TanStack Start
 
-### IA
+### Fluxo simplificado
 
-- NVIDIA NIM `openai/gpt-oss-20b` como provedor principal.
-- OpenRouter `openai/gpt-oss-20b` como fallback de baixo custo, configurado por `OPENROUTER_MODEL`.
-- O gateway centralizado executa a seleção e o fallback apenas no servidor; o navegador não chama provedores diretamente.
-- Chaves dos provedores permanecem somente no servidor.
-- Uma única reserva de quota por ação do usuário, mesmo quando há tentativa de fallback.
-- Prompts e parsers próprios para conteúdo acadêmico em Markdown.
+```text
+Browser
+   |
+   v
+React / TanStack Start
+   |
+   +------ Supabase Auth
+   |
+   +------ Server Functions
+   |          |
+   |          +------ PostgreSQL
+   |          |
+   |          +------ Supabase Storage
+   |          |
+   |          +------ AI Gateway
+   |                     |
+   |                     +-- NVIDIA NIM
+   |                     |
+   |                     +-- OpenRouter (fallback)
+   |
+   v
+Interface do usuário
+```
 
-O agendamento dos flashcards é determinístico e executado no servidor. Ele foi projetado para oferecer intervalos previsíveis no Beta, sem afirmar eficácia científica além do comportamento implementado.
+As chamadas aos provedores de IA são realizadas no servidor. Credenciais dos provedores não são expostas ao navegador.
 
-### Quota e feedback de geração
+## Geração com IA
 
-Cada usuário pode executar até 20 gerações de IA por dia UTC. Uma proteção antiabuso adicional limita a rede de origem a 100 gerações agregadas por dia UTC, sem armazenar o IP puro. Conteúdo em cache ou já persistido não consome uma nova geração, e todas as tentativas de fallback fazem parte da mesma ação reservada.
+O Judineik AI utiliza um gateway centralizado para geração de conteúdo acadêmico.
 
-Durante gerações longas, o Judineik AI mostra uma barra indeterminada com mensagens de status localizadas e rotativas. Não há porcentagem artificial: o resultado substitui o feedback somente quando a resposta real do servidor é concluída.
+Atualmente:
+
+- NVIDIA NIM com `openai/gpt-oss-20b` é o provedor principal.
+- OpenRouter pode atuar como fallback, utilizando o modelo configurado em `OPENROUTER_MODEL`.
+- A seleção e o fallback entre provedores acontecem somente no servidor.
+- Chaves dos provedores permanecem exclusivamente no ambiente server-side.
+- Uma única ação do usuário corresponde a uma única reserva de quota, mesmo quando ocorre fallback.
+- Prompts e parsers específicos são utilizados para Summary, Questions e Flashcards.
+- Markdown e expressões matemáticas são renderizados na interface.
+
+O agendamento dos flashcards é determinístico e executado no servidor, oferecendo intervalos previsíveis de revisão.
+
+## Quota e controle de uso
+
+Cada usuário pode executar até 20 novas gerações de IA por dia UTC.
+
+Existe também uma proteção antiabuso adicional que limita a rede de origem a 100 gerações agregadas por dia UTC, sem armazenar o endereço IP puro.
+
+Conteúdo já persistido ou disponível em cache não consome uma nova geração.
+
+Quando é necessário utilizar o provedor de fallback, as diferentes tentativas continuam pertencendo à mesma ação e à mesma reserva de quota.
+
+Durante gerações mais longas, a interface apresenta feedback de processamento com mensagens localizadas. O resultado é exibido somente após a resposta real do servidor ser concluída.
 
 ## Segurança
 
-- Documentos são armazenados em bucket privado.
-- Políticas RLS isolam documentos, conteúdo gerado e sessões por usuário.
-- Chaves dos provedores de IA permanecem no servidor.
-- Nenhuma chave `service_role` é usada pelo frontend ou exigida pela aplicação.
-- Server Functions autenticadas validam identidade e propriedade dos documentos.
-- Quotas e bloqueios transacionais protegem gerações concorrentes e uso excessivo.
+A aplicação utiliza diferentes camadas para proteger dados e operações dos usuários:
+
+- Documentos armazenados em bucket privado.
+- Row Level Security para isolamento de dados entre usuários.
+- Conteúdo gerado e sessões associados ao usuário autenticado.
+- Server Functions autenticadas.
+- Validação de propriedade dos documentos no servidor.
+- Credenciais dos provedores de IA disponíveis somente no servidor.
+- Nenhuma chave `service_role` é utilizada pelo frontend ou exigida pela aplicação.
+- Controle transacional de quota para gerações concorrentes.
+- Proteção adicional contra abuso de geração.
 
 ## Internacionalização
 
-O Judineik AI oferece interface em português brasileiro (`pt-BR`) e inglês (`en`). Resumos, conjuntos de questões e flashcards de materiais são persistidos separadamente por idioma. Alterar o idioma não regenera conteúdo nem consome quota automaticamente.
+O Judineik AI possui suporte a:
 
-## Rodando localmente
+- Português brasileiro (`pt-BR`)
+- Inglês (`en`)
+
+Resumos, conjuntos de questões e flashcards são persistidos separadamente por idioma.
+
+Alterar o idioma da interface não dispara automaticamente uma nova geração nem consome quota.
+
+## Executando localmente
 
 ### Pré-requisitos
 
@@ -94,11 +168,20 @@ O Judineik AI oferece interface em português brasileiro (`pt-BR`) e inglês (`e
 
 ### Instalação
 
+Clone o repositório:
+
+```bash
+git clone https://github.com/EnzoMaranezi/judineik-ai.git
+cd judineik-ai
+```
+
+Instale as dependências:
+
 ```bash
 npm install
 ```
 
-Crie seu arquivo local de ambiente a partir de `.env.example` e preencha somente com as credenciais do seu próprio projeto:
+Crie o arquivo de ambiente a partir de `.env.example`:
 
 ```bash
 cp .env.example .env
@@ -110,24 +193,42 @@ No Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-Configure `OPENROUTER_MODEL=openai/gpt-oss-20b`. O sufixo `:free` não é usado pelo gateway de
-produção porque esse endpoint não oferece disponibilidade suficiente para servir como fallback.
+Preencha o arquivo somente com as credenciais da sua própria infraestrutura.
 
-Execute as migrações em ordem:
+Para utilizar OpenRouter como fallback, configure:
 
-1. `0001_initial_schema.sql`: documentos, conteúdo inicial, Storage e RLS.
-2. `0002_allow_text_materials.sql`: materiais somente de texto colado.
-3. `0003_ai_generation_rate_limits.sql`: quota diária e reservas de geração.
-4. `0004_flashcards.sql`: conjuntos e cartões persistentes.
-5. `0005_flashcard_spaced_repetition.sql`: agendamento e histórico de revisões.
-6. `0006_multilingual_generated_content.sql`: conteúdo gerado separado por idioma.
-7. `0007_document_topics.sql`: tópicos vinculados a intervalos da fonte.
-8. `0008_topic_generated_content.sql`: resumos no escopo de tópicos.
-9. `0009_topic_questions.sql`: questões e prática no escopo de tópicos.
-10. `0010_topic_flashcards.sql`: flashcards no escopo de tópicos.
-11. `0011_ai_ip_rate_limits.sql`: quota combinada por conta e proteção antiabuso por rede.
+```env
+OPENROUTER_MODEL=openai/gpt-oss-20b
+```
 
-Consulte [`supabase/README.md`](supabase/README.md) para configurar Auth, Storage, SMTP e URLs de redirecionamento.
+O sufixo `:free` não é utilizado pelo gateway de produção porque esse endpoint não oferece disponibilidade suficiente para funcionar como fallback confiável.
+
+### Banco de dados
+
+Execute as migrations do diretório:
+
+```text
+supabase/migrations/
+```
+
+na ordem numérica.
+
+As migrations configuram, entre outros componentes:
+
+- documentos e materiais;
+- Storage;
+- políticas RLS;
+- quotas de geração;
+- flashcards;
+- histórico de revisões;
+- conteúdo multilíngue;
+- proteção antiabuso.
+
+Algumas migrations históricas permanecem no projeto por fazerem parte da evolução do banco de dados, mesmo quando funcionalidades associadas não fazem mais parte da interface atual.
+
+Consulte [`supabase/README.md`](./supabase/README.md) para detalhes sobre Auth, Storage, SMTP e URLs de redirecionamento.
+
+### Desenvolvimento
 
 Inicie o ambiente local:
 
@@ -137,17 +238,19 @@ npm run dev
 
 ## Scripts
 
-Scripts definidos em `package.json`:
+Os principais scripts disponíveis em `package.json` são:
 
-- `npm run dev`: inicia o servidor de desenvolvimento.
-- `npm run build`: cria o build de produção.
-- `npm run build:dev`: cria um build em modo de desenvolvimento.
-- `npm run preview`: executa o preview do build.
-- `npm test`: executa toda a suíte de testes TypeScript atual.
-- `npm run lint`: executa o ESLint.
-- `npm run format`: formata o projeto com Prettier.
+```bash
+npm run dev
+npm run build
+npm run build:dev
+npm run preview
+npm test
+npm run lint
+npm run format
+```
 
-Execute toda a suíte de testes com:
+Para executar toda a suíte de testes:
 
 ```bash
 npm test
@@ -156,33 +259,69 @@ npm test
 ## Estrutura do projeto
 
 ```text
-src/                  aplicação React, rotas, serviços e funções de servidor
-public/               arquivos públicos estáticos
-scripts/              ferramentas locais de compatibilidade dos provedores
-supabase/migrations/  esquema PostgreSQL, RLS, Storage e RPCs
-supabase/README.md     configuração do projeto Supabase
+src/
+├── components/       componentes da interface
+├── lib/              serviços, utilitários e lógica compartilhada
+└── routes/           rotas e Server Functions
+
+public/               arquivos públicos
+scripts/              ferramentas auxiliares
+supabase/
+├── migrations/       schema, RLS, Storage e RPCs
+└── README.md          documentação da infraestrutura Supabase
 ```
 
-## Limitações do Beta
+## Decisões técnicas
 
-- PDF é o único formato de arquivo aceito; texto pode ser adicionado por colagem.
-- Conteúdo gerado por IA pode conter imprecisões e deve ser revisado pelo estudante.
-- Disponibilidade e limites dos provedores externos podem afetar novas gerações.
-- O produto está em validação ativa e alguns fluxos ainda podem evoluir.
+Algumas decisões importantes tomadas durante o desenvolvimento:
 
-## Roadmap
+**Storage privado**
 
-- Recomendações mais profundas no Overview.
-- Análises ampliadas de revisão e retenção.
-- Suporte a mais formatos de material.
-- Melhorias contínuas de acessibilidade e experiência de estudo.
+Os materiais enviados pelos usuários não são armazenados como arquivos públicos. O acesso é controlado por autenticação e políticas do Supabase.
 
-Não há datas prometidas para esses itens.
+**Row Level Security**
+
+As políticas RLS impedem que um usuário consulte documentos, conteúdo gerado ou sessões pertencentes a outro usuário.
+
+**IA somente no servidor**
+
+O frontend não possui acesso direto às credenciais dos provedores de IA. As gerações passam pelas Server Functions.
+
+**Fallback de provedores**
+
+O gateway permite utilizar um provedor secundário quando o principal não consegue concluir a geração, sem criar uma segunda cobrança de quota para a mesma ação do usuário.
+
+**Persistência do conteúdo gerado**
+
+Resumos, questões e flashcards são armazenados no banco. Isso permite reutilizar resultados existentes e reduz chamadas desnecessárias aos modelos.
+
+**Separação por idioma**
+
+Conteúdo acadêmico gerado é persistido separadamente para português e inglês, evitando que uma simples troca do idioma da interface force uma nova geração.
+
+## Limitações
+
+- PDF é o único formato de arquivo aceito atualmente; materiais de texto também podem ser adicionados por colagem.
+- Conteúdo produzido por modelos de IA pode conter imprecisões e deve ser revisado pelo estudante.
+- Novas gerações dependem da disponibilidade dos provedores externos de IA.
+- O projeto foi desenvolvido como aplicação de portfólio e demonstração técnica, não como serviço comercial.
 
 ## Feedback
 
-Relatos de bugs e sugestões são bem-vindos por meio das Issues deste repositório. Não inclua materiais privados, credenciais ou informações pessoais ao abrir uma issue.
+Bugs e sugestões podem ser enviados por meio das Issues deste repositório.
+
+Não inclua documentos privados, credenciais ou informações pessoais ao abrir uma issue.
+
+## Autor
+
+**Enzo Maranezi**
+
+Bacharelado em Ciência da Computação — Universidade Federal de Alfenas (UNIFAL-MG)
+
+[LinkedIn](https://www.linkedin.com/in/enzo-maranezi) · [GitHub](https://github.com/EnzoMaranezi)
 
 ## Licença
 
-O código-fonte está publicamente visível para fins de demonstração e portfólio. Nenhuma licença de código aberto foi concedida neste momento. O uso, a cópia, a modificação ou a redistribuição dependem de autorização expressa do autor, salvo quando exigido por lei. Uma licença poderá ser adicionada explicitamente em uma versão futura.
+O código-fonte está publicamente visível para fins de demonstração e portfólio.
+
+Nenhuma licença de código aberto foi concedida neste momento. O uso, cópia, modificação ou redistribuição depende de autorização expressa do autor, salvo quando exigido por lei.
