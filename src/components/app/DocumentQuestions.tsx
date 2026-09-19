@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { GeneratedContentLanguageState } from "@/components/app/GeneratedContentLanguageState";
 import { AiGenerationProgress } from "@/components/app/AiGenerationProgress";
 import type { PersistedContentLocale } from "@/lib/i18n";
+import { MarkdownContent } from "@/components/app/MarkdownContent";
 
 interface Props {
   documentId: string;
@@ -387,7 +388,7 @@ export function DocumentQuestionsPanel({ documentId, topicId, canGenerate = true
             </span>
           </div>
 
-          <p className="text-lg leading-relaxed">{currentPrompt}</p>
+          <MarkdownContent className="text-lg leading-relaxed">{currentPrompt}</MarkdownContent>
 
           <ul className="space-y-3">
             {current.options.map((option, i) => {
@@ -411,7 +412,7 @@ export function DocumentQuestionsPanel({ documentId, topicId, canGenerate = true
                     <span className="font-mono text-[11px] text-muted-foreground">
                       {String.fromCharCode(65 + i)}
                     </span>
-                    <span className="flex-1">{option}</span>
+                    <MarkdownContent inline className="min-w-0 flex-1">{option}</MarkdownContent>
                     {answered && isCorrect ? (
                       <Check className="size-4 text-lime" aria-hidden />
                     ) : null}

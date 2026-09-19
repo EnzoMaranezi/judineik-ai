@@ -9,7 +9,7 @@ import type { StudySummary } from "@/lib/summary.schema";
 import { GeneratedContentLanguageState } from "@/components/app/GeneratedContentLanguageState";
 import { AiGenerationProgress } from "@/components/app/AiGenerationProgress";
 import type { PersistedContentLocale } from "@/lib/i18n";
-import { SummaryMarkdown } from "@/components/app/SummaryMarkdown";
+import { MarkdownContent } from "@/components/app/MarkdownContent";
 
 interface Props {
   documentId: string;
@@ -162,7 +162,7 @@ export function DocumentSummaryPanel({ documentId, documentTitle, topicId }: Pro
           transition={{ duration: 0.4 }}
           className="mt-8 space-y-8 border-t border-border pt-8"
         >
-          <h2 className="text-lg"><SummaryMarkdown inline>{summary.title}</SummaryMarkdown></h2>
+          <h2 className="text-lg"><MarkdownContent inline>{summary.title}</MarkdownContent></h2>
 
           {summary.keyConcepts.length > 0 && (
             <section>
@@ -173,7 +173,7 @@ export function DocumentSummaryPanel({ documentId, documentTitle, topicId }: Pro
                     key={c}
                     className="rounded-full border border-border px-3 py-1 font-mono text-[11px] text-muted-foreground"
                   >
-                    <SummaryMarkdown inline>{c}</SummaryMarkdown>
+                    <MarkdownContent inline>{c}</MarkdownContent>
                   </li>
                 ))}
               </ul>
@@ -186,8 +186,8 @@ export function DocumentSummaryPanel({ documentId, documentTitle, topicId }: Pro
               <div className="mt-3 space-y-4">
                 {summary.explanations.map((e) => (
                   <div key={e.heading}>
-                    <p className="text-sm text-lime"><SummaryMarkdown inline>{e.heading}</SummaryMarkdown></p>
-                    <SummaryMarkdown className="mt-1 text-sm leading-relaxed text-muted-foreground">{e.body}</SummaryMarkdown>
+                    <p className="text-sm text-lime"><MarkdownContent inline>{e.heading}</MarkdownContent></p>
+                    <MarkdownContent className="mt-1 text-sm leading-relaxed text-muted-foreground">{e.body}</MarkdownContent>
                   </div>
                 ))}
               </div>
@@ -200,8 +200,8 @@ export function DocumentSummaryPanel({ documentId, documentTitle, topicId }: Pro
               <dl className="mt-3 space-y-3">
                 {summary.definitions.map((d) => (
                   <div key={d.term}>
-                    <dt className="font-mono text-xs"><SummaryMarkdown inline>{d.term}</SummaryMarkdown></dt>
-                    <dd className="mt-1 text-sm leading-relaxed text-muted-foreground"><SummaryMarkdown inline>{d.definition}</SummaryMarkdown></dd>
+                    <dt className="font-mono text-xs"><MarkdownContent inline>{d.term}</MarkdownContent></dt>
+                    <dd className="mt-1 text-sm leading-relaxed text-muted-foreground"><MarkdownContent inline>{d.definition}</MarkdownContent></dd>
                   </div>
                 ))}
               </dl>
@@ -213,7 +213,7 @@ export function DocumentSummaryPanel({ documentId, documentTitle, topicId }: Pro
               <AppLabel>{t("summary.relationships")}</AppLabel>
               <ul className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
                 {summary.relationships.map((r) => (
-                  <li key={r}>— <SummaryMarkdown inline>{r}</SummaryMarkdown></li>
+                  <li key={r}>— <MarkdownContent inline>{r}</MarkdownContent></li>
                 ))}
               </ul>
             </section>
@@ -221,12 +221,12 @@ export function DocumentSummaryPanel({ documentId, documentTitle, topicId }: Pro
 
           <section>
             <AppLabel>{t("summary.finalReview")}</AppLabel>
-            <SummaryMarkdown className="mt-3 text-sm leading-relaxed">{summary.review}</SummaryMarkdown>
+            <MarkdownContent className="mt-3 text-sm leading-relaxed">{summary.review}</MarkdownContent>
           </section>
 
           {summary.limitations && (
             <p className="font-mono text-[11px] text-muted-foreground">
-              {t("summary.limitations")}: <SummaryMarkdown inline>{summary.limitations}</SummaryMarkdown>
+              {t("summary.limitations")}: <MarkdownContent inline>{summary.limitations}</MarkdownContent>
             </p>
           )}
         </motion.div>

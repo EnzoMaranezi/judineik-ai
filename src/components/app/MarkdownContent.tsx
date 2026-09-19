@@ -19,8 +19,8 @@ const inlineComponents: Components = {
   h6: ({ children }) => <>{children}</>,
 };
 
-/** Renders persisted Summary text with safe CommonMark and KaTeX math support. */
-export function SummaryMarkdown({ children, className, inline = false }: Props) {
+/** Renders persisted generated text with safe CommonMark and KaTeX math support. */
+export function MarkdownContent({ children, className, inline = false }: Props) {
   const markdown = normalizeSummaryMathDelimiters(children);
   const rendered = (
     <ReactMarkdown
@@ -31,6 +31,7 @@ export function SummaryMarkdown({ children, className, inline = false }: Props) 
       {markdown}
     </ReactMarkdown>
   );
+  const containerClass = "markdown-content " + (className ?? "");
 
-  return inline ? rendered : <div className={`summary-markdown ${className ?? ""}`}>{rendered}</div>;
+  return inline ? <span className={containerClass}>{rendered}</span> : <div className={containerClass}>{rendered}</div>;
 }
