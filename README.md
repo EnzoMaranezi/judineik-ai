@@ -6,8 +6,13 @@ Plataforma de estudos com IA que transforma materiais acadêmicos em resumos, qu
 
 > Projeto desenvolvido como aplicação full-stack para explorar geração de conteúdo com IA, autenticação, persistência de dados, segurança, quotas de uso e experiência de estudo.
 
-<!-- Adicionar aqui uma screenshot da aplicação -->
-<!-- ![Judineik AI](./docs/judineik-preview.png) -->
+<p align="center">
+  <img
+    src="https://github.com/user-attachments/assets/0b04e12a-d33f-4de5-a1ec-5a1027c00f91"
+    alt="Judineik AI - Dashboard"
+    width="100%"
+  />
+</p>
 
 ## Sobre o projeto
 
