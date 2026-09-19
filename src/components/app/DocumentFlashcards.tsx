@@ -9,6 +9,7 @@ import { useI18n } from "@/lib/i18n";
 import type { PersistedContentLocale } from "@/lib/i18n";
 import { GeneratedContentLanguageState } from "@/components/app/GeneratedContentLanguageState";
 import { AiGenerationProgress } from "@/components/app/AiGenerationProgress";
+import { MarkdownContent } from "@/components/app/MarkdownContent";
 
 type FlashcardMode = "review" | "browse";
 
@@ -196,7 +197,7 @@ export function DocumentFlashcardsPanel({ documentId, topicId, canGenerate = tru
     {mode === "review" && reviewCard ? <div className="mt-8 border-t border-border pt-8">
       <div className="flex justify-between font-mono text-[11px] text-muted-foreground"><span>{t("flashcards.cardsDue", { count: dueCards.length })}</span><span>{revealed ? t("flashcards.answer") : t("flashcards.front")}</span></div>
       <motion.button key={`${reviewCard.id}-${revealed}`} type="button" onClick={() => setRevealed((value) => !value)} className="mt-5 flex min-h-64 w-full flex-col items-center justify-center rounded-2xl border border-border bg-surface-2/60 p-8 text-center transition-colors hover:border-lime/40" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="max-w-2xl text-xl leading-relaxed">{revealed ? reviewCard.back : reviewCard.front}</p>
+        <MarkdownContent inline className="inline-block w-full max-w-2xl text-xl leading-relaxed">{revealed ? reviewCard.back : reviewCard.front}</MarkdownContent>
         <span className="mt-8 inline-flex items-center gap-2 font-mono text-[11px] text-muted-foreground"><Eye className="size-3" />{revealed ? t("flashcards.hideAnswer") : t("flashcards.reveal")}</span>
       </motion.button>
       {revealed ? <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">{ratingButtons.map(({ rating, label }) =>
@@ -208,7 +209,7 @@ export function DocumentFlashcardsPanel({ documentId, topicId, canGenerate = tru
       <p className="mb-5 text-sm text-muted-foreground">{t("flashcards.browseBody")}</p>
       <div className="flex justify-between font-mono text-[11px] text-muted-foreground"><span>{t("flashcards.counter", { current: index + 1, total: cards.length })}</span><span>{revealed ? t("flashcards.answer") : t("flashcards.front")}</span></div>
       <motion.button key={`browse-${browseCard.id}-${revealed}`} type="button" onClick={() => setRevealed((value) => !value)} className="mt-5 flex min-h-64 w-full flex-col items-center justify-center rounded-2xl border border-border bg-surface-2/60 p-8 text-center transition-colors hover:border-lime/40" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="max-w-2xl text-xl leading-relaxed">{revealed ? browseCard.back : browseCard.front}</p>
+        <MarkdownContent inline className="inline-block w-full max-w-2xl text-xl leading-relaxed">{revealed ? browseCard.back : browseCard.front}</MarkdownContent>
         <span className="mt-8 inline-flex items-center gap-2 font-mono text-[11px] text-muted-foreground"><Eye className="size-3" />{revealed ? t("flashcards.hideAnswer") : t("flashcards.reveal")}</span>
       </motion.button>
       <div className="mt-6 flex flex-wrap gap-3"><GhostButton onClick={() => move(-1)} disabled={index === 0}>{t("flashcards.previous")}</GhostButton><PrimaryButton onClick={() => move(1)}>{index === cards.length - 1 ? t("flashcards.finish") : t("flashcards.next")}</PrimaryButton></div>
