@@ -228,8 +228,8 @@ function AddMaterial() {
                 <PrimaryButton
                   onClick={() =>
                     navigate({
-                      to: "/app/processing",
-                      search: { documentId: processed.id },
+                      to: "/app/questions/$documentId",
+                      params: { documentId: processed.id },
                     })
                   }
                 >

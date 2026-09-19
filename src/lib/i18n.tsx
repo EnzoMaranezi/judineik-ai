@@ -291,7 +291,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "material.uploading": "Uploading...",
     "material.saving": "Saving...",
     "material.chooseAnother": "Choose another file",
-    "material.continueStudy": "Open document summary",
+    "material.continueStudy": "Practice with questions",
     "material.pasteInstead": "or paste your notes instead ->",
     "material.pasteTitle": "Paste your notes.",
     "material.pastePlaceholder":
@@ -1028,7 +1028,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "material.uploading": "Enviando...",
     "material.saving": "Salvando...",
     "material.chooseAnother": "Escolher outro arquivo",
-    "material.continueStudy": "Abrir resumo do documento",
+    "material.continueStudy": "Praticar com questões",
     "material.pasteInstead": "ou cole suas anotacoes ->",
     "material.pasteTitle": "Cole suas anotacoes.",
     "material.pastePlaceholder":
