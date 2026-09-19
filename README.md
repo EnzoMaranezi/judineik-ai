@@ -2,7 +2,7 @@
 
 Plataforma de estudos com IA que transforma materiais acadêmicos em resumos, questões e flashcards, mantendo todo o conteúdo conectado ao material original.
 
-[**Acessar aplicação**](https://nexaai-gamma.vercel.app/)
+[**Acessar aplicação**](https://judineik-ai.vercel.app)
 
 > Projeto desenvolvido como aplicação full-stack para explorar geração de conteúdo com IA, autenticação, persistência de dados, segurança, quotas de uso e experiência de estudo.
 
