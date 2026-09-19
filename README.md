@@ -19,8 +19,6 @@ O Judineik AI organiza materiais acadêmicos em uma experiência de estudo cont�
 - Resumo, questões e flashcards para o material completo.
 - Practice My Mistakes para praticar erros anteriores.
 - Flashcards com revisão espaçada e histórico de revisões.
-- Study by Topics: descoberta de tópicos e conteúdo independente por tópico.
-- Resumo, questões, prática e flashcards por tópico.
 - Overview, Progress e histórico de Study Sessions com dados reais.
 - Interface e conteúdo gerado em português brasileiro e inglês.
 - Feedback de progresso para gerações de IA de longa duração.
@@ -28,33 +26,14 @@ O Judineik AI organiza materiais acadêmicos em uma experiência de estudo cont�
 ## Como funciona
 
 ```text
-Material
+PDF
   -> processamento
-  -> estudo do material completo
-       -> resumo
-       -> questões
-       -> flashcards
-  -> estudo por tópicos
-       -> resumo do tópico
-       -> questões do tópico
-       -> flashcards do tópico
-
-Questões
-  -> Study Sessions
-  -> Practice My Mistakes
-
-Flashcards
-  -> revisão espaçada
-
-Toda atividade de estudo
-  -> Overview / Progress / Study Sessions
+  -> resumo
+  -> questões
+  -> flashcards
 ```
 
 O processamento prepara o material e identifica sua estrutura; ele não gera perguntas. O material persistido é a fonte de verdade para o conteúdo gerado. Resumos, questões e flashcards existentes são reutilizados quando possível.
-
-## Study by Topics
-
-O Judineik AI descobre tópicos a partir do conteúdo persistido do material e mantém cada tópico vinculado aos seus intervalos de fonte. Cada tópico pode ter seu próprio resumo, questões, prática de erros e flashcards, sem se misturar ao conteúdo do material completo. Conteúdo já gerado e salvo é reutilizado pelo escopo e idioma, sem consumir uma nova geração de IA.
 
 ## Arquitetura
 
@@ -102,7 +81,7 @@ Durante gerações longas, o Judineik AI mostra uma barra indeterminada com mens
 
 ## Internacionalização
 
-O Judineik AI oferece interface em português brasileiro (`pt-BR`) e inglês (`en`). Resumos, conjuntos de questões e flashcards de materiais e tópicos são persistidos separadamente por idioma. Alterar o idioma não regenera conteúdo nem consome quota automaticamente.
+O Judineik AI oferece interface em português brasileiro (`pt-BR`) e inglês (`en`). Resumos, conjuntos de questões e flashcards de materiais são persistidos separadamente por idioma. Alterar o idioma não regenera conteúdo nem consome quota automaticamente.
 
 ## Rodando localmente
 
