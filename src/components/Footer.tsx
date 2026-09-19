@@ -1,3 +1,4 @@
+import { Github, Linkedin } from "lucide-react";
 import { SITE, NAV_LINKS } from "@/data/site";
 import { useI18n } from "@/lib/i18n";
 
@@ -44,7 +45,30 @@ export function Footer() {
           <p className="font-mono text-[11px] text-muted-foreground">
             © {SITE.year} {SITE.name}. {t("landing.built")}
           </p>
-          <p className="font-mono text-[11px] text-muted-foreground/60">{t("landing.agent")}</p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="font-mono text-[11px] text-muted-foreground/60">{t("landing.builtBy")}</p>
+            <div className="flex items-center gap-2">
+              <a
+                href="https://github.com/EnzoMaranezi"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Enzo Maranezi on GitHub"
+                className="text-muted-foreground/60 transition-colors hover:text-foreground"
+              >
+                <Github className="size-3.5" aria-hidden="true" />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/enzo-maranezi"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Enzo Maranezi on LinkedIn"
+                className="text-muted-foreground/60 transition-colors hover:text-foreground"
+              >
+                <Linkedin className="size-3.5" aria-hidden="true" />
+              </a>
+            </div>
+            <p className="font-mono text-[11px] text-muted-foreground/60">{t("landing.agent")}</p>
+          </div>
         </div>
       </div>
     </footer>

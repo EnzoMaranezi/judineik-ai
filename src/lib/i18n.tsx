@@ -598,6 +598,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.product": "Product",
     "landing.social": "Social",
     "landing.built": "Built for learning.",
+    "landing.builtBy": "Built by Enzo Maranezi",
     "landing.socialProofLabel": "Built for the way students actually learn",
     "landing.socialProofBody":
       "Designed for university students, researchers and lifelong learners.",
@@ -1338,6 +1339,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.product": "Produto",
     "landing.social": "Social",
     "landing.built": "Criado para aprender.",
+    "landing.builtBy": "Desenvolvido por Enzo Maranezi",
     "landing.socialProofLabel": "Criado para o jeito como estudantes realmente aprendem",
     "landing.socialProofBody":
       "Pensado para universitarios, pesquisadores e pessoas que aprendem a vida toda.",
