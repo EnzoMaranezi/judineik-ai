@@ -123,7 +123,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.error.rateLimit":
       "Too many attempts in a short period. Please wait a few minutes and try again.",
     "reset.title": "Set a new password",
-    "reset.description": "Choose a new password for your NEXA workspace.",
+    "reset.description": "Choose a new password for your Judineik AI workspace.",
     "reset.newPassword": "New password",
     "reset.confirmPassword": "Confirm password",
     "reset.checking": "Checking reset link...",
@@ -166,7 +166,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "overview.noSummary": "no summary",
     "overview.sessionCount": "{count} session{plural}",
     "overview.recommendFirstText": "Upload your first material to unlock recommendations.",
-    "overview.recommendFirstDetail": "NEXA only recommends what it has actually read.",
+    "overview.recommendFirstDetail": "Judineik AI only recommends what it has actually read.",
     "overview.recommendWeakText": "Your weakest material is {title} at {accuracy}% accuracy.",
     "overview.recommendWeakDetail":
       "Recommended: a new question session on this material ({correct}/{total} correct so far).",
@@ -195,7 +195,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "overview.flashcardsNoDecksBody":
       "Create flashcards from a material to start a review schedule.",
     "overview.flashcardsUnavailable": "We couldn't load your flashcard review schedule.",
-    "materials.title": "Everything your agent has read.",
+    "materials.title": "Everything your study assistant has read.",
     "materials.label": "My materials",
     "materials.uploaded": "Uploaded documents",
     "materials.noneTitle": "No materials yet",
@@ -319,7 +319,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "summary.savedLabel": "Saved summary",
     "summary.readyLabel": "Ready for analysis",
     "summary.materialSummary": "Material summary",
-    "summary.heading": "Read what your agent learned.",
+    "summary.heading": "Read what your study assistant learned.",
     "summary.generate": "Generate summary",
     "summary.generating": "Generating...",
     "summary.regenerate": "Regenerate summary",
@@ -540,7 +540,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.passwordLength": "Password must be at least 6 characters.",
     "settings.passwordMismatch": "Passwords don't match.",
     "settings.deleteAccount": "Delete account",
-    "settings.deleteAccountDescription": "Permanently remove your NEXA account and associated study data.",
+    "settings.deleteAccountDescription": "Permanently remove your Judineik AI account and associated study data.",
     "settings.deleteAccountWarning": "This action cannot be undone.",
     "settings.deleteAccountDialogTitle": "Delete your account?",
     "settings.deleteAccountDialogDescription": "This permanently removes your materials, summaries, questions and sessions, flashcards and review history, associated progress, and account.",
@@ -571,7 +571,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.startStudying": "Start studying",
     "landing.openMenu": "Open menu",
     "landing.closeMenu": "Close menu",
-    "landing.agent": "The AI academic agent",
+    "landing.agent": "Your AI study assistant",
     "landing.headline": "Your academic life, understood by AI.",
     "landing.heroBody":
       "Upload your study material. Create summaries, practice questions and review flashcards from your documents.",
@@ -582,7 +582,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.readyToReview": "You are ready to review",
     "landing.retention": "Retention",
     "landing.session": "Session",
-    "landing.agentActive": "Agent active",
+    "landing.agentActive": "Assistant active",
     "landing.detectedWeak": "Detected weak dependency:",
     "landing.schedulingReinforcement": "Scheduling reinforcement.",
     "landing.openWorkspace": "Open workspace",
@@ -615,7 +615,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.transformationTitle": "From material to",
     "landing.transformationHighlight": "mastery.",
     "landing.featureLabel": "Core features",
-    "landing.featureTitle": "One agent. Everything you need to",
+    "landing.featureTitle": "One assistant. Everything you need to",
     "landing.featureHighlight": "learn.",
     "landing.aiTutorLabel": "01 - AI tutor",
     "landing.aiTutorTitle": "Ask anything. Understand everything.",
@@ -657,11 +657,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.positioningBody":
       "It's an intelligence layer built around your education - with memory, context, goals and the ability to act before you ask.",
     "landing.traditionalAi": "Traditional AI",
-    "landing.academicAgent": "Academic agent",
+    "landing.academicAgent": "Study assistant",
     "landing.intelligenceLabel": "Intelligence",
     "landing.intelligenceTitle": "The more you study, the",
     "landing.intelligenceHighlight": "smarter it gets.",
-    "landing.agentLoop": "Agent loop",
+    "landing.agentLoop": "Assistant workflow",
     "landing.agentLoopBody":
       "Every session feeds the model of how you learn. Nothing resets, nothing is asked twice, and the plan for tomorrow is written tonight.",
     "landing.retention30": "Retention after 30 days",
@@ -671,7 +671,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.graphTitle": "Your subjects,",
     "landing.graphHighlight": "connected.",
     "landing.graphBody":
-      "Every document becomes nodes and dependencies. The agent knows which concept blocks another, and studies in that order.",
+      "Every document becomes nodes and dependencies. Your assistant identifies which concept supports another and helps you study in that order.",
     "landing.selectedNode": "Selected node",
     "landing.mastery": "Mastery",
     "landing.hoverNode": "Hover a node to inspect its concepts.",
@@ -682,7 +682,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.personalizationHighlight": "same way.",
     "landing.profile": "Profile",
     "landing.measured": "Measured",
-    "landing.agentAdapts": "Agent adapts",
+    "landing.agentAdapts": "Assistant adapts",
     "landing.workflowLabel": "Workflow",
     "landing.workflowTitle": "From PDF to study session",
     "landing.workflowHighlight": "in seconds.",
@@ -705,14 +705,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.yourAnswer": "Your answer",
     "landing.demoAnswer":
       "Because Reno doesn't drop back to slow start - it halves the window and keeps going.",
-    "landing.agentFeedback": "Agent feedback",
+    "landing.agentFeedback": "Assistant feedback",
     "landing.demoFeedback": "Good reasoning. You're missing one important distinction:",
     "landing.demoFeedbackTail": "Let's reinforce it - two questions added to tonight's review.",
     "landing.dailyLabel": "Daily briefing",
     "landing.dailyTitle": "You don't plan the day.",
     "landing.dailyHighlight": "It does.",
     "landing.dailyBody":
-      "Each evening the agent decides what matters, how long it takes, and in which order - from everything it knows about you.",
+      "Each evening your assistant organizes what matters, how long it takes, and in which order - based on your study activity.",
     "landing.goodEvening": "Good evening",
     "landing.todayMatters": "Here's what matters today.",
     "landing.total": "Total",
@@ -728,7 +728,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.howTitle": "Three steps. Then it runs",
     "landing.howHighlight": "itself.",
     "landing.betaLabel": "Beta access",
-    "landing.betaTitle": "NEXA is currently in",
+    "landing.betaTitle": "Judineik AI is currently in",
     "landing.betaHighlight": "beta.",
     "landing.betaBody":
       "Create an account to explore the current study experience.",
@@ -856,7 +856,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.error.rateLimit":
       "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.",
     "reset.title": "Defina uma nova senha",
-    "reset.description": "Escolha uma nova senha para seu workspace NEXA.",
+    "reset.description": "Escolha uma nova senha para seu workspace Judineik AI.",
     "reset.newPassword": "Nova senha",
     "reset.confirmPassword": "Confirmar senha",
     "reset.checking": "Verificando link...",
@@ -900,7 +900,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "overview.noSummary": "sem resumo",
     "overview.sessionCount": "{count} sessao{plural}",
     "overview.recommendFirstText": "Envie seu primeiro material para liberar recomendacoes.",
-    "overview.recommendFirstDetail": "A NEXA so recomenda o que realmente leu.",
+    "overview.recommendFirstDetail": "O Judineik AI so recomenda o que realmente leu.",
     "overview.recommendWeakText": "Seu material mais fraco e {title}, com {accuracy}% de precisao.",
     "overview.recommendWeakDetail":
       "Recomendado: uma nova sessao de perguntas neste material ({correct}/{total} corretas ate agora).",
@@ -929,7 +929,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Crie flashcards a partir de um material para iniciar um ciclo de revisao.",
     "overview.flashcardsUnavailable":
       "Nao foi possivel carregar seu cronograma de revisao de flashcards.",
-    "materials.title": "Tudo que seu agente ja leu.",
+    "materials.title": "Tudo que seu assistente de estudos ja leu.",
     "materials.label": "Meus materiais",
     "materials.uploaded": "Documentos enviados",
     "materials.noneTitle": "Nenhum material ainda",
@@ -1056,7 +1056,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "summary.savedLabel": "Resumo salvo",
     "summary.readyLabel": "Pronto para analise",
     "summary.materialSummary": "Resumo do material",
-    "summary.heading": "Leia o que seu agente aprendeu.",
+    "summary.heading": "Leia o que seu assistente de estudos aprendeu.",
     "summary.generate": "Gerar resumo",
     "summary.generating": "Gerando...",
     "summary.regenerate": "Gerar novo resumo",
@@ -1280,7 +1280,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.passwordLength": "A senha deve ter pelo menos 6 caracteres.",
     "settings.passwordMismatch": "As senhas nao coincidem.",
     "settings.deleteAccount": "Excluir conta",
-    "settings.deleteAccountDescription": "Remove permanentemente sua conta NEXA e os dados de estudo associados.",
+    "settings.deleteAccountDescription": "Remove permanentemente sua conta Judineik AI e os dados de estudo associados.",
     "settings.deleteAccountWarning": "Esta ação não pode ser desfeita.",
     "settings.deleteAccountDialogTitle": "Excluir sua conta?",
     "settings.deleteAccountDialogDescription": "Isso remove permanentemente seus materiais, resumos, perguntas e sessões, flashcards e histórico de revisão, progresso associado e conta.",
@@ -1311,7 +1311,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.startStudying": "Comecar a estudar",
     "landing.openMenu": "Abrir menu",
     "landing.closeMenu": "Fechar menu",
-    "landing.agent": "O agente academico de IA",
+    "landing.agent": "Seu assistente de estudos com IA",
     "landing.headline": "Sua vida academica, entendida por IA.",
     "landing.heroBody":
       "Envie seu material de estudo. Crie resumos, pratique perguntas e revise flashcards a partir dos seus documentos.",
@@ -1322,7 +1322,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.readyToReview": "Voce esta pronto para revisar",
     "landing.retention": "Retencao",
     "landing.session": "Sessao",
-    "landing.agentActive": "Agente ativo",
+    "landing.agentActive": "Assistente ativo",
     "landing.detectedWeak": "Dependencia fraca detectada:",
     "landing.schedulingReinforcement": "Agendando reforco.",
     "landing.openWorkspace": "Abrir workspace",
@@ -1355,7 +1355,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.transformationTitle": "Do material ao",
     "landing.transformationHighlight": "dominio.",
     "landing.featureLabel": "Recursos centrais",
-    "landing.featureTitle": "Um agente. Tudo que voce precisa para",
+    "landing.featureTitle": "Um assistente. Tudo que voce precisa para",
     "landing.featureHighlight": "aprender.",
     "landing.aiTutorLabel": "01 - Tutor de IA",
     "landing.aiTutorTitle": "Pergunte qualquer coisa. Entenda tudo.",
@@ -1397,11 +1397,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.positioningBody":
       "E uma camada de inteligencia construida ao redor da sua educacao - com memoria, contexto, objetivos e capacidade de agir antes de voce pedir.",
     "landing.traditionalAi": "IA tradicional",
-    "landing.academicAgent": "Agente academico",
+    "landing.academicAgent": "Assistente de estudos",
     "landing.intelligenceLabel": "Inteligencia",
     "landing.intelligenceTitle": "Quanto mais voce estuda,",
     "landing.intelligenceHighlight": "mais inteligente ela fica.",
-    "landing.agentLoop": "Ciclo do agente",
+    "landing.agentLoop": "Fluxo do assistente",
     "landing.agentLoopBody":
       "Cada sessao alimenta o modelo de como voce aprende. Nada zera, nada e perguntado duas vezes, e o plano de amanha e escrito hoje a noite.",
     "landing.retention30": "Retencao depois de 30 dias",
@@ -1411,7 +1411,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.graphTitle": "Suas disciplinas,",
     "landing.graphHighlight": "conectadas.",
     "landing.graphBody":
-      "Cada documento vira nos e dependencias. O agente sabe qual conceito bloqueia outro e estuda nessa ordem.",
+      "Cada documento vira nos e dependencias. Seu assistente identifica qual conceito apoia outro e ajuda voce a estudar nessa ordem.",
     "landing.selectedNode": "No selecionado",
     "landing.mastery": "Dominio",
     "landing.hoverNode": "Passe o mouse sobre um no para inspecionar seus conceitos.",
@@ -1422,7 +1422,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.personalizationHighlight": "mesmo jeito.",
     "landing.profile": "Perfil",
     "landing.measured": "Medido",
-    "landing.agentAdapts": "O agente adapta",
+    "landing.agentAdapts": "O assistente se adapta",
     "landing.workflowLabel": "Fluxo",
     "landing.workflowTitle": "Do PDF a sessao de estudo",
     "landing.workflowHighlight": "em segundos.",
@@ -1446,7 +1446,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.yourAnswer": "Sua resposta",
     "landing.demoAnswer":
       "Porque o Reno nao volta para slow start - ele reduz a janela pela metade e continua.",
-    "landing.agentFeedback": "Feedback do agente",
+    "landing.agentFeedback": "Feedback do assistente",
     "landing.demoFeedback": "Bom raciocinio. Falta uma distincao importante:",
     "landing.demoFeedbackTail":
       "Vamos reforcar isso - duas perguntas foram adicionadas a revisao de hoje a noite.",
@@ -1454,7 +1454,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.dailyTitle": "Voce nao planeja o dia.",
     "landing.dailyHighlight": "Ele planeja.",
     "landing.dailyBody":
-      "Toda noite, o agente decide o que importa, quanto tempo leva e em qual ordem - a partir de tudo que sabe sobre voce.",
+      "Toda noite, seu assistente organiza o que importa, quanto tempo leva e em qual ordem - com base na sua atividade de estudo.",
     "landing.goodEvening": "Boa noite",
     "landing.todayMatters": "Aqui esta o que importa hoje.",
     "landing.total": "Total",
@@ -1470,7 +1470,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.howTitle": "Tres passos. Depois ele roda",
     "landing.howHighlight": "sozinho.",
     "landing.betaLabel": "Acesso beta",
-    "landing.betaTitle": "O NEXA está atualmente em fase",
+    "landing.betaTitle": "O Judineik AI está atualmente em fase",
     "landing.betaHighlight": "beta.",
     "landing.betaBody":
       "Crie uma conta para explorar a experiência atual de estudos.",
@@ -1638,8 +1638,8 @@ export const landingContent: Record<
     ],
     faqs: [
       {
-        q: "What is the Academic AI Agent?",
-        a: "NEXA helps you study your documents with summaries, practice questions and flashcards.",
+        q: "What is the AI study assistant?",
+        a: "Judineik AI helps you study your documents with summaries, practice questions and flashcards.",
       },
       {
         q: "Can I upload my own PDFs?",
@@ -1667,7 +1667,7 @@ export const landingContent: Record<
       },
       {
         q: "Can I use it for any subject?",
-        a: "Any subject with material behind it - engineering, medicine, law, humanities, languages. The agent adapts its method to the structure of the content.",
+        a: "Any subject with material behind it - engineering, medicine, law, humanities, languages. The assistant adapts its method to the structure of the content.",
       },
     ],
     personalizationProfiles: [
@@ -1813,8 +1813,8 @@ export const landingContent: Record<
     ],
     faqs: [
       {
-        q: "O que e o Agente Academico de IA?",
-        a: "O NEXA ajuda você a estudar seus documentos com resumos, perguntas de prática e flashcards.",
+        q: "O que e o assistente de estudos com IA?",
+        a: "O Judineik AI ajuda você a estudar seus documentos com resumos, perguntas de prática e flashcards.",
       },
       {
         q: "Posso enviar meus proprios PDFs?",
@@ -1842,7 +1842,7 @@ export const landingContent: Record<
       },
       {
         q: "Posso usar em qualquer disciplina?",
-        a: "Qualquer disciplina com material por tras - engenharia, medicina, direito, humanas, idiomas. O agente adapta o metodo a estrutura do conteudo.",
+        a: "Qualquer disciplina com material por tras - engenharia, medicina, direito, humanas, idiomas. O assistente adapta o metodo a estrutura do conteudo.",
       },
     ],
     personalizationProfiles: [

@@ -27,8 +27,8 @@ import { getAiGenerationUsageToday, type AiGenerationUsage } from "@/services/ai
 export const Route = createFileRoute("/app/settings")({
   head: () => ({
     meta: [
-      { title: "Settings - NEXA Workspace" },
-      { name: "description", content: "Manage your NEXA account settings." },
+      { title: "Settings - Judineik AI Workspace" },
+      { name: "description", content: "Manage your Judineik AI account settings." },
       { name: "robots", content: "noindex" },
     ],
   }),

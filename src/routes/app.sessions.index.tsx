@@ -13,12 +13,12 @@ import { userErrorKey } from "@/lib/user-errors";
 export const Route = createFileRoute("/app/sessions/")({
   head: () => ({
     meta: [
-      { title: "Study Sessions — NEXA Workspace" },
+      { title: "Study Sessions — Judineik AI Workspace" },
       {
         name: "description",
         content: "Every question session you completed, with accuracy and material.",
       },
-      { property: "og:title", content: "Study Sessions — NEXA Workspace" },
+      { property: "og:title", content: "Study Sessions — Judineik AI Workspace" },
       { property: "og:description", content: "Your completed question sessions." },
       { name: "robots", content: "noindex" },
     ],

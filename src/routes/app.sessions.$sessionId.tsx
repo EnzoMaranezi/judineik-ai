@@ -14,9 +14,9 @@ import { userErrorKey } from "@/lib/user-errors";
 export const Route = createFileRoute("/app/sessions/$sessionId")({
   head: () => ({
     meta: [
-      { title: "Session result — NEXA Workspace" },
+      { title: "Session result — Judineik AI Workspace" },
       { name: "description", content: "Review a completed question session answer by answer." },
-      { property: "og:title", content: "Session result — NEXA Workspace" },
+      { property: "og:title", content: "Session result — Judineik AI Workspace" },
       { property: "og:description", content: "Review your recorded session answers." },
       { name: "robots", content: "noindex" },
     ],

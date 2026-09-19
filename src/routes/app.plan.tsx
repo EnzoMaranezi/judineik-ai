@@ -22,9 +22,9 @@ export const Route = createFileRoute("/app/plan")({
   }),
   head: () => ({
     meta: [
-      { title: "Your study plan — NEXA Workspace" },
+      { title: "Your study plan — Judineik AI Workspace" },
       { name: "description", content: "An AI-generated session built from your own material." },
-      { property: "og:title", content: "Your study plan — NEXA Workspace" },
+      { property: "og:title", content: "Your study plan — Judineik AI Workspace" },
       { property: "og:description", content: "Session structure, knowledge map and weak areas." },
       { name: "robots", content: "noindex" },
     ],

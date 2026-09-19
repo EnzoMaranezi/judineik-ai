@@ -1,6 +1,6 @@
 export const SITE = {
-  name: "NEXA",
-  tagline: "The AI Academic Agent",
+  name: "Judineik AI",
+  tagline: "Your AI study assistant",
   year: 2026,
 } as const;
 

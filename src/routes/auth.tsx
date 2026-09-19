@@ -11,13 +11,13 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — NEXA academic agent" },
+      { title: "Sign in — Judineik AI study assistant" },
       {
         name: "description",
-        content: "Sign in or create your NEXA account to upload material and start AI study sessions.",
+        content: "Sign in or create your Judineik AI account to upload material and start studying.",
       },
-      { property: "og:title", content: "Sign in to NEXA" },
-      { property: "og:description", content: "Access your NEXA academic workspace." },
+      { property: "og:title", content: "Sign in to Judineik AI" },
+      { property: "og:description", content: "Access your Judineik AI study workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },

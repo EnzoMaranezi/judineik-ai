@@ -20,9 +20,9 @@ import { Marquee } from "@/components/Marquee";
 import { Footer } from "@/components/Footer";
 import { WorkspaceTransition } from "@/components/WorkspaceTransition";
 
-const TITLE = "NEXA — Your AI Academic Agent";
+const TITLE = "Judineik AI — Your AI study assistant";
 const DESCRIPTION =
-  "An AI academic agent that understands your study material, builds personalized study sessions, generates questions and helps you master what matters.";
+  "An AI study assistant that understands your study material, generates summaries, questions and flashcards, and helps you focus on what matters.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "NEXA",
+          name: "Judineik AI",
           applicationCategory: "EducationalApplication",
           operatingSystem: "Web",
           description: DESCRIPTION,

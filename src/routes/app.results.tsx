@@ -17,13 +17,13 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/app/results")({
   head: () => ({
     meta: [
-      { title: "Progress — NEXA Workspace" },
+      { title: "Progress — Judineik AI Workspace" },
       {
         name: "description",
         content: "Real accuracy, questions answered and study activity across your materials.",
       },
-      { property: "og:title", content: "Progress — NEXA Workspace" },
-      { property: "og:description", content: "Your real learning progress in NEXA." },
+      { property: "og:title", content: "Progress — Judineik AI Workspace" },
+      { property: "og:description", content: "Your real learning progress in Judineik AI." },
       { name: "robots", content: "noindex" },
     ],
   }),

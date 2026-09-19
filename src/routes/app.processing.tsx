@@ -16,9 +16,9 @@ export const Route = createFileRoute("/app/processing")({
   }),
   head: () => ({
     meta: [
-      { title: "Understanding your material — NEXA" },
+      { title: "Understanding your material — Judineik AI" },
       { name: "description", content: "Preparing your material for document study." },
-      { property: "og:title", content: "Understanding your material — NEXA" },
+      { property: "og:title", content: "Understanding your material — Judineik AI" },
       { property: "og:description", content: "Preparing your material for document study." },
       { name: "robots", content: "noindex" },
     ],

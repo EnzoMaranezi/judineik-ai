@@ -78,13 +78,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "NEXA — Your AI Academic Agent" },
+      { title: "Judineik AI — Your AI study assistant" },
       {
         name: "description",
         content:
-          "An AI academic agent that understands your study material and builds the study system around it.",
+          "An AI study assistant that understands your study material and helps you build an effective study routine.",
       },
-      { property: "og:site_name", content: "NEXA" },
+      { property: "og:site_name", content: "Judineik AI" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#0A0A0A" },

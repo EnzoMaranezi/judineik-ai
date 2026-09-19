@@ -6,7 +6,7 @@
 2. Em **Project Settings > API**, obtenha a URL e a chave publicável do projeto.
 3. Configure essas informações no arquivo local `.env`; não versione esse arquivo.
 
-O NEXA não exige `SUPABASE_SERVICE_ROLE_KEY` em seu runtime.
+O Judineik AI não exige `SUPABASE_SERVICE_ROLE_KEY` em seu runtime.
 
 ## Aplicar as migrações
 
@@ -41,7 +41,7 @@ As migrações também configuram geração multilíngue persistida, reservas de
 3. Configure a confirmação de e-mail conforme o ambiente.
 4. Preserve os links de recuperação gerados pelo Supabase Auth.
 
-O NEXA usa Supabase Auth para cadastro, confirmação de e-mail, login, recuperação de senha, sessões e tokens.
+O Judineik AI usa Supabase Auth para cadastro, confirmação de e-mail, login, recuperação de senha, sessões e tokens.
 
 ## Configurar SMTP personalizado
 

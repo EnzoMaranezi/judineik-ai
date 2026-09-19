@@ -12,8 +12,8 @@ export const Route = createFileRoute("/auth_/reset")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Reset password — NEXA academic agent" },
-      { name: "description", content: "Set a new password for your NEXA account." },
+      { title: "Reset password — Judineik AI study assistant" },
+      { name: "description", content: "Set a new password for your Judineik AI account." },
       { name: "robots", content: "noindex" },
     ],
   }),

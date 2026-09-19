@@ -1,4 +1,4 @@
-# NEXA
+# Judineik AI
 
 Plataforma de estudos com IA que transforma materiais acadêmicos em resumos, questões, flashcards e revisões espaçadas.
 
@@ -6,11 +6,11 @@ Plataforma de estudos com IA que transforma materiais acadêmicos em resumos, qu
 
 [Acessar a aplicação pública atual](https://nexaai-gamma.vercel.app)
 
-O link acima aponta para o deployment público atual do NEXA. Forks e instalações locais devem configurar sua própria URL e infraestrutura.
+O link acima aponta para o deployment público atual do Judineik AI. Forks e instalações locais devem configurar sua própria URL e infraestrutura.
 
-## Sobre o NEXA
+## Sobre o Judineik AI
 
-O NEXA organiza materiais acadêmicos em uma experiência de estudo contínua. Depois de enviar um PDF ou colar anotações, o estudante pode gerar conteúdo contextual, praticar com questões, revisar flashcards e acompanhar sua evolução sem perder o vínculo com o material original.
+O Judineik AI organiza materiais acadêmicos em uma experiência de estudo contínua. Depois de enviar um PDF ou colar anotações, o estudante pode gerar conteúdo contextual, praticar com questões, revisar flashcards e acompanhar sua evolução sem perder o vínculo com o material original.
 
 ## Funcionalidades
 
@@ -54,7 +54,7 @@ O processamento prepara o material e identifica sua estrutura; ele não gera per
 
 ## Study by Topics
 
-O NEXA descobre tópicos a partir do conteúdo persistido do material e mantém cada tópico vinculado aos seus intervalos de fonte. Cada tópico pode ter seu próprio resumo, questões, prática de erros e flashcards, sem se misturar ao conteúdo do material completo. Conteúdo já gerado e salvo é reutilizado pelo escopo e idioma, sem consumir uma nova geração de IA.
+O Judineik AI descobre tópicos a partir do conteúdo persistido do material e mantém cada tópico vinculado aos seus intervalos de fonte. Cada tópico pode ter seu próprio resumo, questões, prática de erros e flashcards, sem se misturar ao conteúdo do material completo. Conteúdo já gerado e salvo é reutilizado pelo escopo e idioma, sem consumir uma nova geração de IA.
 
 ## Arquitetura
 
@@ -89,7 +89,7 @@ O agendamento dos flashcards é determinístico e executado no servidor. Ele foi
 
 Cada usuário pode executar até 20 gerações de IA por dia UTC. Uma proteção antiabuso adicional limita a rede de origem a 100 gerações agregadas por dia UTC, sem armazenar o IP puro. Conteúdo em cache ou já persistido não consome uma nova geração, e todas as tentativas de fallback fazem parte da mesma ação reservada.
 
-Durante gerações longas, o NEXA mostra uma barra indeterminada com mensagens de status localizadas e rotativas. Não há porcentagem artificial: o resultado substitui o feedback somente quando a resposta real do servidor é concluída.
+Durante gerações longas, o Judineik AI mostra uma barra indeterminada com mensagens de status localizadas e rotativas. Não há porcentagem artificial: o resultado substitui o feedback somente quando a resposta real do servidor é concluída.
 
 ## Segurança
 
@@ -102,7 +102,7 @@ Durante gerações longas, o NEXA mostra uma barra indeterminada com mensagens d
 
 ## Internacionalização
 
-O NEXA oferece interface em português brasileiro (`pt-BR`) e inglês (`en`). Resumos, conjuntos de questões e flashcards de materiais e tópicos são persistidos separadamente por idioma. Alterar o idioma não regenera conteúdo nem consome quota automaticamente.
+O Judineik AI oferece interface em português brasileiro (`pt-BR`) e inglês (`en`). Resumos, conjuntos de questões e flashcards de materiais e tópicos são persistidos separadamente por idioma. Alterar o idioma não regenera conteúdo nem consome quota automaticamente.
 
 ## Rodando localmente
 

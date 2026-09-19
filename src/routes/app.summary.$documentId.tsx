@@ -9,12 +9,12 @@ import { supabase } from "@/lib/supabase";
 export const Route = createFileRoute("/app/summary/$documentId")({
   head: () => ({
     meta: [
-      { title: "Summary — NEXA Workspace" },
+      { title: "Summary — Judineik AI Workspace" },
       {
         name: "description",
         content: "Read the AI-generated summary built from your uploaded material.",
       },
-      { property: "og:title", content: "Summary — NEXA Workspace" },
+      { property: "og:title", content: "Summary — Judineik AI Workspace" },
       {
         property: "og:description",
         content: "Read the AI-generated summary for your material.",

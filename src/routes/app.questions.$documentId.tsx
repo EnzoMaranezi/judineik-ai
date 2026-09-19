@@ -9,12 +9,12 @@ import { supabase } from "@/lib/supabase";
 export const Route = createFileRoute("/app/questions/$documentId")({
   head: () => ({
     meta: [
-      { title: "Study questions — NEXA Workspace" },
+      { title: "Study questions — Judineik AI Workspace" },
       {
         name: "description",
         content: "Practise with multiple-choice questions generated from your uploaded material.",
       },
-      { property: "og:title", content: "Study questions — NEXA Workspace" },
+      { property: "og:title", content: "Study questions — Judineik AI Workspace" },
       {
         property: "og:description",
         content: "Multiple-choice questions generated from your material.",

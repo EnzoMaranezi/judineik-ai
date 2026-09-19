@@ -21,9 +21,9 @@ export const Route = createFileRoute("/app/session")({
   }),
   head: () => ({
     meta: [
-      { title: "Study session — NEXA Workspace" },
+      { title: "Study session — Judineik AI Workspace" },
       { name: "description", content: "Active recall session generated from your own material." },
-      { property: "og:title", content: "Study session — NEXA Workspace" },
+      { property: "og:title", content: "Study session — Judineik AI Workspace" },
       { property: "og:description", content: "Answer, get feedback, build mastery." },
       { name: "robots", content: "noindex" },
     ],

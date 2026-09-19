@@ -22,9 +22,9 @@ import { listDocuments, type StoredDocument } from "@/services/documentService";
 export const Route = createFileRoute("/app/")({
   head: () => ({
     meta: [
-      { title: "Overview — NEXA Workspace" },
+      { title: "Overview — Judineik AI Workspace" },
       { name: "description", content: "Today's study, AI recommendations and knowledge overview." },
-      { property: "og:title", content: "Overview — NEXA Workspace" },
+      { property: "og:title", content: "Overview — Judineik AI Workspace" },
       { property: "og:description", content: "Today's study and knowledge overview." },
       { name: "robots", content: "noindex" },
     ],
