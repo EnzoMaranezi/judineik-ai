@@ -10,7 +10,7 @@ import {
 } from "./ai-provider-chain.ts";
 
 const attempts: AiProviderAttempt[] = [
-  { provider: "nvidia", model: "openai/gpt-oss-20b", label: "nvidia-primary" },
+  { provider: "nvidia", model: "nvidia/nemotron-3.5-lightning-30b-a3b", label: "nvidia-primary" },
   { provider: "openrouter", model: "configured-model", label: "openrouter-fallback" },
 ];
 

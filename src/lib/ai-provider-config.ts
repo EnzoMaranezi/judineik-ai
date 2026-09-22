@@ -1,6 +1,6 @@
 import type { AiProviderAttempt } from "./ai-provider-chain.ts";
 
-export const NVIDIA_PRIMARY_MODEL = "openai/gpt-oss-20b";
+export const NVIDIA_PRIMARY_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b";
 export const NVIDIA_PRIMARY_TIMEOUT_MS = 60_000;
 export const OPENROUTER_PROVIDER_TIMEOUT_MS = 60_000;
 

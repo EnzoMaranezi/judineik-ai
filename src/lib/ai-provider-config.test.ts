@@ -15,7 +15,11 @@ test("configures the complete provider chain in the intended order", () => {
   assert.deepEqual(
     config.attempts.map(({ provider, model, label }) => ({ provider, model, label })),
     [
-      { provider: "nvidia", model: "openai/gpt-oss-20b", label: "nvidia-primary" },
+      {
+        provider: "nvidia",
+        model: "nvidia/nemotron-3.5-lightning-30b-a3b",
+        label: "nvidia-primary",
+      },
       {
         provider: "openrouter",
         model: "configured-openrouter-model",
